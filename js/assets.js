@@ -1,34 +1,24 @@
-/* ===== CARGAR SPRITES ERIKA ===== */
+// js/assets.js
 
-export const runImgs = [new Image(), new Image(), new Image()];
-runImgs[0].src = "Erika2.png";
-runImgs[1].src = "Erika4.png";
-runImgs[2].src = "Erika3.png";
-
-export const jumpImg = new Image();
-jumpImg.src = "Erika4.png";
+export const runImgs = [];
+for (let i = 1; i <= 8; i++) {
+  const img = new Image();
+  img.src = `Erikas${i}.png`;
+  img.style.imageRendering = "pixelated";
+  runImgs.push(img);
+}
 
 let imagesLoaded = 0;
-const totalImages = 4;
+const totalImages = runImgs.length;
 
 export function loadSprites(onReady) {
-  function imageLoaded() {
-    imagesLoaded++;
-    if (imagesLoaded === totalImages) onReady();
-  }
-
-  function imageError() {
+  function done() {
     imagesLoaded++;
     if (imagesLoaded === totalImages) onReady();
   }
 
   runImgs.forEach(img => {
-    img.onload = imageLoaded;
-    img.onerror = imageError;
-    img.style.imageRendering = "pixelated";
+    img.onload = done;
+    img.onerror = done;
   });
-
-  jumpImg.onload = imageLoaded;
-  jumpImg.onerror = imageError;
-  jumpImg.style.imageRendering = "pixelated";
 }
