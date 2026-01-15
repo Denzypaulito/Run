@@ -65,6 +65,8 @@ function init() {
   score = 0;
   gameOver = false;
   obstacleTimer = 0;
+
+  updateScore(0); // 🔥 reset visual inmediato
 }
 
 /* ===== CONTROLES ===== */
@@ -91,7 +93,7 @@ onStart(() => {
   hideMenu();
   started = true;
   init();
-  lastTime = 0;
+  lastTime = performance.now();
   requestAnimationFrame(gameLoop);
 });
 
@@ -100,7 +102,7 @@ onRestart(() => {
   resetMenu();
   started = true;
   init();
-  lastTime = 0;
+  lastTime = performance.now();
   requestAnimationFrame(gameLoop);
 });
 
@@ -110,10 +112,13 @@ let lastTime = 0;
 function gameLoop(time = 0) {
   if (!started) return;
 
-  const delta = time - lastTime;
+  let delta = time - lastTime;
   lastTime = time;
 
-  const dt = delta / 16.666; // normalizado a 60fps
+  // 🛡️ evita saltos gigantes si el tab se pausa
+  if (delta > 60) delta = 60;
+
+  const dt = delta / 16.666;
 
   update(dt);
 
@@ -123,14 +128,14 @@ function gameLoop(time = 0) {
 /* ===== UPDATE ===== */
 function update(dt) {
   /* Mundo */
-  updateWorld(world, score, dt);
+  updateWorld(world, score);
   drawWorld(ctx, canvas, world, groundY, dt);
 
   /* Jugador */
   updatePlayer(player, groundY, dt);
   drawPlayer(ctx, player, spritesReady);
 
-  /* Obstáculos (por tiempo) */
+  /* Obstáculos */
   const obstacleState = {
     obstacles,
     canvas,

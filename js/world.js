@@ -1,7 +1,6 @@
 export function createWorld() {
   return {
     isDayMode: true,
-    groundX: 0,
     speed: 6,
     baseSpeed: 6,
     lastScoreMilestone: 0,
@@ -11,7 +10,6 @@ export function createWorld() {
 
 export function initWorld(world, canvas) {
   world.isDayMode = true;
-  world.groundX = 0;
   world.speed = world.baseSpeed;
   world.lastScoreMilestone = 0;
   world.clouds = [];
@@ -28,7 +26,7 @@ export function initWorld(world, canvas) {
   }
 }
 
-export function updateWorld(world, score, dt) {
+export function updateWorld(world, score) {
   world.speed = world.baseSpeed + Math.floor(score / 25);
 
   const currentMilestone = Math.floor(score / 700);
@@ -46,8 +44,9 @@ export function drawWorld(ctx, canvas, world, groundY, dt) {
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  /* Nubes */
+  /* ===== NUBES ===== */
   ctx.fillStyle = world.isDayMode ? "#ccc" : "#444";
+
   world.clouds.forEach(cloud => {
     cloud.x -= world.speed * 0.2 * dt;
 
@@ -63,12 +62,21 @@ export function drawWorld(ctx, canvas, world, groundY, dt) {
     ctx.fill();
   });
 
-  // ===== SUELO LINEA CONTINUA =====
-ctx.strokeStyle = fgColor;
-ctx.lineWidth = 3;
-ctx.beginPath();
-ctx.moveTo(0, groundY + 60);
-ctx.lineTo(canvas.width, groundY + 60);
-ctx.stroke();
+  const groundLevel = groundY + 60;
 
+  /* ===== SOMBRA ===== */
+  const grad = ctx.createLinearGradient(0, groundLevel, 0, groundLevel + 14);
+  grad.addColorStop(0, "rgba(0,0,0,0.25)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, groundLevel, canvas.width, 14);
+
+  /* ===== LINEA DE SUELO ===== */
+  ctx.strokeStyle = fgColor;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, groundLevel);
+  ctx.lineTo(canvas.width, groundLevel);
+  ctx.stroke();
 }

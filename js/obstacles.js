@@ -1,3 +1,11 @@
+import { cactusImgs, birdImgs } from "./assets.js";
+
+function randomFrom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/* ===== SPAWN ===== */
+
 export function spawnObstacles(state) {
   let {
     obstacles,
@@ -12,9 +20,9 @@ export function spawnObstacles(state) {
 
   obstacleTimer += dt;
 
-  // ⏳ intervalo base con más variación
+  // ⏳ intervalo más natural
   let base = Math.max(95 - speed * 3, 55);
-  let randomExtra = Math.random() * 40; // 🎲 variación
+  let randomExtra = Math.random() * 40;
   let spawnInterval = base + randomExtra;
 
   if (obstacleTimer < spawnInterval) {
@@ -26,69 +34,82 @@ export function spawnObstacles(state) {
 
   const isBird = score > 350 && Math.random() > 0.55;
 
-  // 🌵 patrón de cactus más natural
-  const patternRoll = Math.random();
-
-  let cactusCount = 1;
+  // 🌵 patrón orgánico
+  const roll = Math.random();
+  let count = 1;
 
   if (!isBird) {
-    if (patternRoll < 0.65) cactusCount = 1;       // la mayoría solos
-    else if (patternRoll < 0.9) cactusCount = 2;   // a veces dobles
-    else cactusCount = 3;                          // raros triples
+    if (roll < 0.65) count = 1;
+    else if (roll < 0.9) count = 2;
+    else count = 3;
   }
 
-  // 🎯 separación variable entre cactus
-  let separation = 22 + Math.random() * 14;
+  let separation = 26 + Math.random() * 18;
 
-  for (let i = 0; i < cactusCount; i++) {
+  for (let i = 0; i < count; i++) {
+    const img = isBird
+      ? randomFrom(birdImgs)
+      : randomFrom(cactusImgs);
+
     obstacles.push({
       x: canvas.width + 10 + i * separation,
       y: isBird
-        ? groundY - 40 - Math.random() * 35
-        : groundLineY + 2,
-      width: 26,
-      height: 30,
-      emoji: isBird ? "🦅" : "🌵",
+        ? groundY - 60 - Math.random() * 40
+        : groundLineY - 42,
+      baseSize: 40,
+      img,
       passed: false,
-      isBird
+      isBird,
+      drawWidth: 40,
+      drawHeight: 40
     });
   }
 
   state.obstacleTimer = obstacleTimer;
 }
 
+/* ===== UPDATE + DRAW ===== */
 
 export function updateAndDrawObstacles(state, ctx, player, onGameOver) {
   const { obstacles, speed, dt } = state;
-
-  ctx.font = "30px Arial";
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obs = obstacles[i];
     obs.x -= speed * dt;
 
-    ctx.fillText(obs.emoji, Math.round(obs.x), Math.round(obs.y));
+    if (obs.img && obs.img.complete) {
+      const ratio = obs.img.naturalWidth / obs.img.naturalHeight;
+
+      obs.drawHeight = obs.baseSize;
+      obs.drawWidth = obs.drawHeight * ratio;
+
+      ctx.drawImage(
+        obs.img,
+        Math.round(obs.x),
+        Math.round(obs.y),
+        obs.drawWidth,
+        obs.drawHeight
+      );
+    }
 
     const hitboxMargin = 8;
-    const obsTop = obs.y - obs.height;
-    const obsBottom = obs.y;
 
     if (
-      player.x + hitboxMargin < obs.x + obs.width - hitboxMargin &&
+      player.x + hitboxMargin < obs.x + obs.drawWidth - hitboxMargin &&
       player.x + player.width - hitboxMargin > obs.x + hitboxMargin &&
-      player.y + hitboxMargin < obsBottom - hitboxMargin &&
-      player.y + player.height - hitboxMargin > obsTop + hitboxMargin
+      player.y + hitboxMargin < obs.y + obs.drawHeight - hitboxMargin &&
+      player.y + player.height - hitboxMargin > obs.y + hitboxMargin
     ) {
       onGameOver();
       return;
     }
 
-    if (!obs.passed && obs.x + obs.width < player.x) {
+    if (!obs.passed && obs.x + obs.drawWidth < player.x) {
       obs.passed = true;
       state.score += obs.isBird ? 2 : 1;
     }
 
-    if (obs.x + obs.width < 0) {
+    if (obs.x + obs.drawWidth < 0) {
       obstacles.splice(i, 1);
     }
   }
