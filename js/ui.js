@@ -1,5 +1,12 @@
 // js/ui.js
-import { submitScore, getTopScores, getMyRank } from "./leaderboard.js";
+import {
+  submitScore,
+  getTopScores,
+  getMyRank,
+  getFullLeaderboard
+} from "./leaderboard.js";
+
+/* ===== ELEMENTOS ===== */
 
 const menu = document.getElementById("menu");
 const startBtn = document.getElementById("startBtn");
@@ -16,11 +23,19 @@ const leaderboardBox = document.getElementById("leaderboard");
 const leaderboardList = document.getElementById("leaderboardList");
 const myRankText = document.getElementById("myRankText");
 
+const openFullLbBtn = document.getElementById("openFullLbBtn");
+
+const fullLeaderboardBox = document.getElementById("fullLeaderboard");
+const fullLeaderboardList = document.getElementById("fullLeaderboardList");
+const closeFullLbBtn = document.getElementById("closeFullLbBtn");
+
 const nameModal = document.getElementById("nameModal");
 const nameInput = document.getElementById("playerNameInput");
 const submitNameBtn = document.getElementById("submitNameBtn");
 
 const loader = document.getElementById("loader");
+
+/* ===== LOCAL STORAGE ===== */
 
 let highScore = Number(localStorage.getItem("erikaHighScore")) || 0;
 let savedName = localStorage.getItem("erikaPlayerName") || "";
@@ -52,6 +67,7 @@ export function onRestart(cb) {
 export function hideMenu() {
   menu.style.display = "none";
   leaderboardBox.style.display = "none";
+  fullLeaderboardBox.style.display = "none";
   nameModal.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
@@ -67,6 +83,7 @@ export function resetMenu() {
   finalScoreValue.textContent = "00000";
 
   leaderboardBox.style.display = "none";
+  fullLeaderboardBox.style.display = "none";
   nameModal.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
@@ -99,6 +116,7 @@ export function showGameOver(score) {
 
   nameModal.style.display = "flex";
   leaderboardBox.style.display = "none";
+  fullLeaderboardBox.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
 
@@ -117,9 +135,8 @@ export function showGameOver(score) {
     nameModal.style.display = "none";
     loader.style.display = "flex";
 
-    await submitScore(name, finalScoreNum);
-
-    const [scores, myRank] = await Promise.all([
+    const [_, scores, myRank] = await Promise.all([
+      submitScore(name, finalScoreNum),
       getTopScores(),
       getMyRank(finalScoreNum)
     ]);
@@ -145,7 +162,7 @@ export function updateScore(score) {
   scoreEl.textContent = Math.floor(score).toString().padStart(5, "0");
 }
 
-/* ===== LEADERBOARD ===== */
+/* ===== TOP 10 ===== */
 
 function drawLeaderboard(scores, myName, myScore) {
   leaderboardList.innerHTML = "";
@@ -167,5 +184,45 @@ function drawLeaderboard(scores, myName, myScore) {
     li.appendChild(nameSpan);
     li.appendChild(scoreSpan);
     leaderboardList.appendChild(li);
+  });
+
+  openFullLbBtn.style.display = "block";
+}
+
+/* ===== FULL LEADERBOARD ===== */
+
+openFullLbBtn.onclick = async () => {
+  leaderboardBox.style.display = "none";
+  myRankText.style.display = "none";
+  loader.style.display = "flex";
+
+  const scores = await getFullLeaderboard(100);
+  drawFullLeaderboard(scores);
+
+  loader.style.display = "none";
+  fullLeaderboardBox.style.display = "block";
+};
+
+closeFullLbBtn.onclick = () => {
+  fullLeaderboardBox.style.display = "none";
+  leaderboardBox.style.display = "block";
+  myRankText.style.display = "block";
+};
+
+function drawFullLeaderboard(scores) {
+  fullLeaderboardList.innerHTML = "";
+
+  scores.forEach((row, i) => {
+    const li = document.createElement("li");
+
+    const nameSpan = document.createElement("span");
+    const scoreSpan = document.createElement("span");
+
+    nameSpan.textContent = `${i + 1}. ${row.name}`;
+    scoreSpan.textContent = row.score.toString().padStart(5, "0");
+
+    li.appendChild(nameSpan);
+    li.appendChild(scoreSpan);
+    fullLeaderboardList.appendChild(li);
   });
 }

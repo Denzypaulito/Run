@@ -288,3 +288,53 @@ body.night #leaderboard li {
   to { transform: rotate(360deg); }
 }
 
+/* ===== FULL LEADERBOARD ===== */
+
+#fullLeaderboard {
+  margin-top: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 14px;
+  border: 2px solid currentColor;
+  animation: pop 0.25s ease;
+}
+
+#fullLbScroll {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 10px 0;
+  padding-right: 6px;
+}
+
+#fullLbScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+#fullLbScroll::-webkit-scrollbar-thumb {
+  background: currentColor;
+  opacity: 0.4;
+}
+
+#fullLeaderboardList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#fullLeaderboardList li {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0;
+  padding-bottom: 2px;
+  border-bottom: 1px dotted rgba(0,0,0,0.2);
+  font-size: 14px;
+}
+
+body.night #fullLeaderboardList li {
+  border-bottom: 1px dotted rgba(255,255,255,0.25);
+}
+
+@keyframes pop {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

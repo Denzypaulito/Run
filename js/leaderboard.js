@@ -72,3 +72,22 @@ export async function getMyRank(score) {
   }
 }
 
+export async function getFullLeaderboard(limit = 100) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=name,score&order=score.desc&limit=${limit}`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+
