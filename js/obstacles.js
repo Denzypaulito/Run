@@ -20,9 +20,9 @@ export function spawnObstacles(state) {
 
   obstacleTimer += dt;
 
-  // ⏳ intervalo más natural
-  let base = Math.max(95 - speed * 3, 55);
-  let randomExtra = Math.random() * 40;
+  // ⏳ intervalo más natural (menos absurdo)
+  let base = Math.max(115 - speed * 3.5, 70);
+  let randomExtra = Math.random() * 60;
   let spawnInterval = base + randomExtra;
 
   if (obstacleTimer < spawnInterval) {
@@ -32,30 +32,50 @@ export function spawnObstacles(state) {
 
   obstacleTimer = 0;
 
-  const isBird = score > 350 && Math.random() > 0.55;
+  const isBird = score > 300 && Math.random() > 0.55;
 
-  // 🌵 patrón orgánico
+  // 🌵 patrón orgánico de cactus
   const roll = Math.random();
   let count = 1;
 
   if (!isBird) {
-    if (roll < 0.65) count = 1;
-    else if (roll < 0.9) count = 2;
+    if (roll < 0.7) count = 1;
+    else if (roll < 0.92) count = 2;
     else count = 3;
   }
 
-  let separation = 26 + Math.random() * 18;
+  // 🎯 separación variable
+  let separation = 28 + Math.random() * 22;
 
   for (let i = 0; i < count; i++) {
     const img = isBird
       ? randomFrom(birdImgs)
       : randomFrom(cactusImgs);
 
+    // 🐦 alturas impredecibles
+    let y;
+
+    if (isBird) {
+      const hRoll = Math.random();
+
+      if (hRoll < 0.4) {
+        // alto
+        y = groundY - 95 - Math.random() * 35;
+      } else if (hRoll < 0.75) {
+        // medio
+        y = groundY - 60 - Math.random() * 30;
+      } else {
+        // casi cactus
+        y = groundLineY - 42;
+      }
+    } else {
+      // cactus normal
+      y = groundLineY - 42;
+    }
+
     obstacles.push({
       x: canvas.width + 10 + i * separation,
-      y: isBird
-        ? groundY - 60 - Math.random() * 40
-        : groundLineY - 42,
+      y,
       baseSize: 40,
       img,
       passed: false,

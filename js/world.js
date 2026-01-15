@@ -43,7 +43,7 @@ function createCloud(canvas) {
 export function updateWorld(world, score) {
   world.speed = world.baseSpeed + Math.floor(score / 25);
 
-  const currentMilestone = Math.floor(score / 700);
+  const currentMilestone = Math.floor(score / 350);
   if (currentMilestone > world.lastScoreMilestone) {
     world.lastScoreMilestone = currentMilestone;
     world.isDayMode = !world.isDayMode;

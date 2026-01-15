@@ -13,7 +13,8 @@ import {
   createPlayer,
   updatePlayer,
   drawPlayer,
-  playerJump
+  playerJump,
+  playerCrouch
 } from "./player.js";
 import {
   spawnObstacles,
@@ -53,12 +54,18 @@ let world;
 let player, obstacles, frame, score, gameOver, started;
 let obstacleTimer = 0;
 
+/* ===== LOOP CONTROL ===== */
+let lastTime = 0;
+let animationId = null;
+
 /* ===== INIT ===== */
 function init() {
   world = createWorld();
   initWorld(world, canvas);
 
   player = createPlayer(groundY);
+  player.animFrame = 0;
+  player.fastFall = false;
 
   obstacles = [];
   frame = 0;
@@ -66,7 +73,7 @@ function init() {
   gameOver = false;
   obstacleTimer = 0;
 
-  updateScore(0); // 🔥 reset visual inmediato
+  updateScore(0);
 }
 
 /* ===== CONTROLES ===== */
@@ -80,6 +87,17 @@ document.addEventListener("keydown", e => {
     e.preventDefault();
     jump();
   }
+
+  if (e.code === "ArrowDown" || e.code === "KeyS") {
+    e.preventDefault();
+    playerCrouch(player, true);
+  }
+});
+
+document.addEventListener("keyup", e => {
+  if (e.code === "ArrowDown" || e.code === "KeyS") {
+    playerCrouch(player, false);
+  }
 });
 
 canvas.addEventListener("click", jump);
@@ -91,51 +109,53 @@ canvas.addEventListener("touchstart", e => {
 /* ===== UI EVENTS ===== */
 onStart(() => {
   hideMenu();
+
+  if (animationId) cancelAnimationFrame(animationId);
+
   started = true;
   init();
   lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
+  animationId = requestAnimationFrame(gameLoop);
 });
 
 onRestart(() => {
   hideMenu();
   resetMenu();
+
+  if (animationId) cancelAnimationFrame(animationId);
+
   started = true;
   init();
   lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
+  animationId = requestAnimationFrame(gameLoop);
 });
 
 /* ===== LOOP CON TIEMPO ===== */
-let lastTime = 0;
-
 function gameLoop(time = 0) {
   if (!started) return;
 
   let delta = time - lastTime;
   lastTime = time;
 
-  // 🛡️ evita saltos gigantes si el tab se pausa
   if (delta > 60) delta = 60;
 
   const dt = delta / 16.666;
 
   update(dt);
 
-  if (!gameOver) requestAnimationFrame(gameLoop);
+  if (!gameOver) {
+    animationId = requestAnimationFrame(gameLoop);
+  }
 }
 
 /* ===== UPDATE ===== */
 function update(dt) {
-  /* Mundo */
   updateWorld(world, score);
   drawWorld(ctx, canvas, world, groundY, dt);
 
-  /* Jugador */
-  updatePlayer(player, groundY, dt);
+  updatePlayer(player, groundY, dt, world.speed);
   drawPlayer(ctx, player, spritesReady);
 
-  /* Obstáculos */
   const obstacleState = {
     obstacles,
     canvas,
@@ -160,7 +180,6 @@ function update(dt) {
     }
   );
 
-  /* Score */
   score += 0.1 * dt;
   updateScore(score);
 
