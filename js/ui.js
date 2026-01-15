@@ -114,52 +114,81 @@ export function showGameOver(score) {
   startBtn.style.display = "none";
   instructions.style.display = "none";
 
-  nameModal.style.display = "flex";
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
 
-  nameInput.value = savedName || "";
-  nameInput.focus();
+  /* ===============================
+     👉 SOLO SI ES NUEVO RÉCORD
+  =============================== */
 
-  submitNameBtn.onclick = async () => {
-    let name = nameInput.value.trim();
+  if (isNewRecord) {
+    nameModal.style.display = "flex";
+    nameInput.value = savedName || "";
+    nameInput.focus();
 
-    if (!name) name = "Anon";
-    name = name.replace(/[^a-zA-Z0-9 _-]/g, "").substring(0, 12);
+    submitNameBtn.onclick = async () => {
+      let name = nameInput.value.trim();
+      if (!name) name = "Anon";
 
-    localStorage.setItem("erikaPlayerName", name);
-    savedName = name;
+      name = name.replace(/[^a-zA-Z0-9 _-]/g, "").substring(0, 12);
+      localStorage.setItem("erikaPlayerName", name);
+      savedName = name;
 
-    nameModal.style.display = "none";
-    loader.style.display = "flex";
+      nameModal.style.display = "none";
+      loader.style.display = "flex";
 
-    const [_, scores, myRank] = await Promise.all([
-      submitScore(name, finalScoreNum),
+      await submitScore(name, finalScoreNum);
+
+    // pequeño buffer para evitar latencia fantasma
+    await new Promise(r => setTimeout(r, 250));
+        
+    const [scores, myRank] = await Promise.all([
       getTopScores(),
       getMyRank(finalScoreNum)
     ]);
 
-    drawLeaderboard(scores, name, finalScoreNum);
+      finishLeaderboard(scores, myRank, name, finalScoreNum);
+    };
 
-    if (myRank > 10) {
-      myRankText.textContent = `No entraste al top 10 — quedaste en el puesto #${myRank}`;
-      myRankText.style.display = "block";
-    } else {
-      myRankText.style.display = "none";
-    }
+  } else {
+    /* ===============================
+       👉 SI NO ES NUEVO RÉCORD
+    =============================== */
 
-    loader.style.display = "none";
-    leaderboardBox.style.display = "block";
-    restartBtn.style.display = "block";
-  };
+    loader.style.display = "flex";
+
+    Promise.all([
+      getTopScores(),
+      getMyRank(finalScoreNum)
+    ]).then(([scores, myRank]) => {
+      finishLeaderboard(scores, myRank, savedName, highScore);
+    });
+  }
 }
 
 /* ===== SCORE ===== */
 
 export function updateScore(score) {
   scoreEl.textContent = Math.floor(score).toString().padStart(5, "0");
+}
+
+/* ===== FINALIZA LEADERBOARD ===== */
+
+function finishLeaderboard(scores, myRank, myName, myScore) {
+  drawLeaderboard(scores, myName, myScore);
+
+  if (myRank > 10) {
+    myRankText.textContent = `No entraste al top 10 — quedaste en el puesto #${myRank}`;
+    myRankText.style.display = "block";
+  } else {
+    myRankText.style.display = "none";
+  }
+
+  loader.style.display = "none";
+  leaderboardBox.style.display = "block";
+  restartBtn.style.display = "block";
 }
 
 /* ===== TOP 10 ===== */
@@ -206,7 +235,7 @@ openFullLbBtn.onclick = async () => {
 closeFullLbBtn.onclick = () => {
   fullLeaderboardBox.style.display = "none";
   leaderboardBox.style.display = "block";
-  myRankText.style.display = "block";
+  if (myRankText.textContent) myRankText.style.display = "block";
 };
 
 function drawFullLeaderboard(scores) {

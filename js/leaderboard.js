@@ -8,24 +8,25 @@ const TABLE = "scores";
 export async function submitScore(name, score) {
   score = Math.floor(score);
 
-  if (!name || name.length > 12) return;
-  if (score < 0 || score > 999999) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY,
+      "Authorization": `Bearer ${SUPABASE_KEY}`,
+      "Prefer": "return=representation" // 👈 IMPORTANTE
+    },
+    body: JSON.stringify({ name, score })
+  });
 
-  try {
-    await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_KEY,
-        "Authorization": `Bearer ${SUPABASE_KEY}`,
-        "Prefer": "return=minimal"
-      },
-      body: JSON.stringify({ name, score })
-    });
-  } catch (err) {
-    console.warn("Leaderboard submit error:", err);
+  if (!res.ok) {
+    console.warn("Error guardando score");
+    return null;
   }
+
+  return await res.json(); // 👈 esperamos confirmación real
 }
+
 
 /* ===== TOP 10 ===== */
 

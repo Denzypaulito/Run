@@ -11,55 +11,64 @@
 
 <div id="container">
   <div id="canvasWrapper">
-    <canvas id="game" width="800" height="300"></canvas>
+  <canvas id="game" width="800" height="300"></canvas>
 
-    <div id="hud">
-      HI <span id="highScore">00000</span> <span id="score">00000</span>
+  <div id="hud">
+    HI <span id="highScore">00000</span> <span id="score">00000</span>
+  </div>
+
+  <!-- BOTÓN DE PAUSA -->
+  <button id="pauseBtn">⏸</button>
+
+  <!-- OVERLAY DE PAUSA -->
+  <div id="pauseOverlay" style="display:none;">
+    <p id="pauseText">PAUSA</p>
+    <p id="countdownText"></p>
+    <button id="resumeBtn">Continuar</button>
+  </div>
+
+  <!-- ===== MENÚ PRINCIPAL ===== -->
+  <div id="menu">
+    <h1>ERIKA RUN</h1>
+    <p id="gameOverText">GAME OVER</p>
+    <p id="finalScore">SCORE: <span id="finalScoreValue">0</span></p>
+    <p id="newRecord">★ NEW RECORD! ★</p>
+    <p id="instructions">Presiona ESPACIO o toca para saltar</p>
+
+    <button id="startBtn">Iniciar</button>
+    <button id="restartBtn">Reintentar</button>
+
+    <!-- LEADERBOARD -->
+    <div id="leaderboard" style="display:none; margin-top:12px;">
+      <h3>TOP 10 MUNDIAL</h3>
+      <ol id="leaderboardList"></ol>
+      <p id="myRankText" style="display:none; margin-top:8px; opacity:0.8;"></p>
+      <button id="openFullLbBtn">Ver leaderboard completo</button>
     </div>
 
-    <div id="menu">
-  <h1>ERIKA RUN</h1>
-  <p id="gameOverText">GAME OVER</p>
-  <p id="finalScore">SCORE: <span id="finalScoreValue">0</span></p>
-  <p id="newRecord">★ NEW RECORD! ★</p>
-  <p id="instructions">Presiona ESPACIO o toca para saltar</p>
+    <div id="fullLeaderboard" style="display:none;">
+      <h3>LEADERBOARD MUNDIAL</h3>
+      <div id="fullLbScroll">
+        <ol id="fullLeaderboardList"></ol>
+      </div>
+      <button id="closeFullLbBtn">Cerrar</button>
+    </div>
 
-  <button id="startBtn">Iniciar</button>
-  <button id="restartBtn">Reintentar</button>
+    <!-- NAME MODAL -->
+    <div id="nameModal" style="display:none;">
+      <p>Ingresa tu nombre</p>
+      <input id="playerNameInput" type="text" maxlength="12" placeholder="Player">
+      <button id="submitNameBtn">Enviar</button>
+    </div>
 
-  <!--  LEADERBOARD -->
-  <div id="leaderboard" style="display:none; margin-top:12px;">
-    <h3>TOP 10 MUNDIAL</h3>
-    <ol id="leaderboardList"></ol>
-    <p id="myRankText" style="display:none; margin-top:8px; opacity:0.8;"></p>
-    <button id="openFullLbBtn">Ver leaderboard completo</button>
-  </div>
-
-  <div id="fullLeaderboard" style="display:none;">
-  <h3>LEADERBOARD MUNDIAL</h3>
-  <div id="fullLbScroll">
-    <ol id="fullLeaderboardList"></ol>
-  </div>
-  <button id="closeFullLbBtn">Cerrar</button>
-  </div>
-
-
-
-    <!-- ===== NAME MODAL ===== -->
-  <div id="nameModal" style="display:none;">
-    <p>Ingresa tu nombre</p>
-    <input id="playerNameInput" type="text" maxlength="12" placeholder="Player">
-    <button id="submitNameBtn">Enviar</button>
-  </div>
-
-  <!-- ===== LOADER ===== -->
-  <div id="loader" style="display:none;">
-    <div class="spinner"></div>
-    <p>Cargando leaderboard...</p>
+    <!-- LOADER -->
+    <div id="loader" style="display:none;">
+      <div class="spinner"></div>
+      <p>Cargando leaderboard...</p>
+    </div>
   </div>
 </div>
 
-  </div>
 </div>
 <script type="module" src="js/main.js"></script>
 </body>

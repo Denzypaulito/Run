@@ -30,11 +30,17 @@ import {
 /* ===== CANVAS ===== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d", { alpha: false });
-
 ctx.imageSmoothingEnabled = false;
-ctx.webkitImageSmoothingEnabled = false;
-ctx.mozImageSmoothingEnabled = false;
-ctx.msImageSmoothingEnabled = false;
+
+/* ===== PAUSA UI ===== */
+const pauseBtn = document.getElementById("pauseBtn");
+const pauseOverlay = document.getElementById("pauseOverlay");
+const pauseText = document.getElementById("pauseText");
+const countdownText = document.getElementById("countdownText");
+const resumeBtn = document.getElementById("resumeBtn");
+
+/* 🔥 oculto desde que carga la página */
+pauseBtn.style.display = "none";
 
 /* ===== SPRITES ===== */
 let spritesReady = false;
@@ -58,6 +64,11 @@ let obstacleTimer = 0;
 let lastTime = 0;
 let animationId = null;
 
+/* ===== PAUSA ===== */
+let paused = false;
+let countingDown = false;
+let countdown = 3;
+
 /* ===== INIT ===== */
 function init() {
   world = createWorld();
@@ -73,12 +84,19 @@ function init() {
   gameOver = false;
   obstacleTimer = 0;
 
+  paused = false;
+  countingDown = false;
+  countdown = 3;
+
+  pauseOverlay.style.display = "none";
+  pauseBtn.style.display = "block"; // ✅ SOLO cuando el juego inicia
+
   updateScore(0);
 }
 
 /* ===== CONTROLES ===== */
 function jump() {
-  if (!started || gameOver) return;
+  if (!started || gameOver || paused || countingDown) return;
   playerJump(player);
 }
 
@@ -91,6 +109,10 @@ document.addEventListener("keydown", e => {
   if (e.code === "ArrowDown" || e.code === "KeyS") {
     e.preventDefault();
     playerCrouch(player, true);
+  }
+
+  if (e.code === "Escape" || e.code === "KeyP") {
+    togglePause();
   }
 });
 
@@ -106,10 +128,57 @@ canvas.addEventListener("touchstart", e => {
   jump();
 }, { passive: false });
 
+/* ===== PAUSA ===== */
+
+pauseBtn.onclick = togglePause;
+resumeBtn.onclick = startCountdown;
+
+function togglePause() {
+  if (!started || gameOver || countingDown) return;
+
+  if (!paused) {
+    paused = true;
+    pauseOverlay.style.display = "flex";
+    pauseText.style.display = "block";
+    countdownText.textContent = "";
+    resumeBtn.style.display = "block";
+    pauseBtn.style.display = "none";
+  }
+}
+
+function startCountdown() {
+  if (!paused) return;
+
+  pauseText.style.display = "none";
+  resumeBtn.style.display = "none";
+  countingDown = true;
+  countdown = 3;
+  runCountdown();
+}
+
+function runCountdown() {
+  countdownText.textContent = countdown === 0 ? "¡YA!" : countdown;
+
+  if (countdown === 0) {
+    setTimeout(() => {
+      paused = false;
+      countingDown = false;
+      pauseOverlay.style.display = "none";
+      pauseBtn.style.display = "block";
+      lastTime = performance.now();
+    }, 500);
+    return;
+  }
+
+  setTimeout(() => {
+    countdown--;
+    runCountdown();
+  }, 900);
+}
+
 /* ===== UI EVENTS ===== */
 onStart(() => {
   hideMenu();
-
   if (animationId) cancelAnimationFrame(animationId);
 
   started = true;
@@ -121,7 +190,6 @@ onStart(() => {
 onRestart(() => {
   hideMenu();
   resetMenu();
-
   if (animationId) cancelAnimationFrame(animationId);
 
   started = true;
@@ -130,9 +198,14 @@ onRestart(() => {
   animationId = requestAnimationFrame(gameLoop);
 });
 
-/* ===== LOOP CON TIEMPO ===== */
+/* ===== GAME LOOP ===== */
 function gameLoop(time = 0) {
   if (!started) return;
+
+  if (paused || countingDown) {
+    animationId = requestAnimationFrame(gameLoop);
+    return;
+  }
 
   let delta = time - lastTime;
   lastTime = time;
@@ -140,7 +213,6 @@ function gameLoop(time = 0) {
   if (delta > 60) delta = 60;
 
   const dt = delta / 16.666;
-
   update(dt);
 
   if (!gameOver) {
@@ -176,13 +248,13 @@ function update(dt) {
     player,
     () => {
       gameOver = true;
+      pauseBtn.style.display = "none"; // ✅ se oculta en game over
       showGameOver(score);
     }
   );
 
   score += 0.1 * dt;
   updateScore(score);
-
   frame++;
 }
 
