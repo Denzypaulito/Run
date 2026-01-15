@@ -22,6 +22,7 @@ export function createPlayer(groundY) {
     animSpeed: 0.12,
     isCrouching: false,
 
+    // fast fall
     fastFall: false,
     fastFallMultiplier: 2.5
   };
@@ -31,7 +32,8 @@ export function createPlayer(groundY) {
 
 export function updatePlayer(player, groundY, dt, worldSpeed = 6) {
 
-  /* --- FÍSICA --- */
+  /* ===== FÍSICA ===== */
+
   if (!player.grounded) {
     const g = player.fastFall
       ? player.gravity * player.fastFallMultiplier
@@ -49,7 +51,8 @@ export function updatePlayer(player, groundY, dt, worldSpeed = 6) {
     player.fastFall = false;
   }
 
-  /* --- LIMBO REAL (solo en el suelo) --- */
+  /* ===== LIMBO REAL (hitbox real) ===== */
+
   if (player.grounded) {
     if (player.isCrouching) {
       player.height = player.crouchHeight;
@@ -60,14 +63,16 @@ export function updatePlayer(player, groundY, dt, worldSpeed = 6) {
     }
   }
 
-  /* --- ANIMACIÓN --- */
+  /* ===== ANIMACIÓN (ligada al mundo) ===== */
+
   if (player.grounded && !player.isCrouching) {
     const speedFactor = 0.6 + worldSpeed / 10;
     player.animFrame += player.animSpeed * speedFactor * dt;
+  }
 
-    if (player.animFrame >= runImgs.length) {
-      player.animFrame = 0;
-    }
+  // blindaje total
+  if (player.animFrame >= runImgs.length || player.animFrame < 0) {
+    player.animFrame = 0;
   }
 }
 
@@ -75,18 +80,18 @@ export function updatePlayer(player, groundY, dt, worldSpeed = 6) {
 
 export function drawPlayer(ctx, player, spritesReady) {
 
+  let index = Math.floor(player.animFrame) % runImgs.length;
   let img;
 
   if (player.grounded) {
-    img = runImgs[Math.floor(player.animFrame)];
+    img = runImgs[index];
   } else {
-    const frame = Math.floor(player.animFrame) % runImgs.length;
-    const distTo3 = Math.abs(frame - 2);
-    const distTo7 = Math.abs(frame - 6);
+    const distTo3 = Math.abs(index - 2);
+    const distTo7 = Math.abs(index - 6);
     img = distTo3 <= distTo7 ? runImgs[2] : runImgs[6];
   }
 
-  if (spritesReady && img.complete) {
+  if (spritesReady && img && img.complete) {
     ctx.drawImage(
       img,
       Math.round(player.x),
@@ -111,12 +116,12 @@ export function playerJump(player) {
 
 export function playerCrouch(player, isDown) {
 
-  // 🪂 en el aire → caída rápida
+  // 🪂 en el aire → caída rápida tipo Chrome Dino
   if (!player.grounded) {
     player.fastFall = isDown;
     return;
   }
 
-  // 🧎 en el suelo → limbo
+  // 🧎 en el suelo → limbo real
   player.isCrouching = isDown;
 }

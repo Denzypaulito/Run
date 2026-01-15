@@ -23,11 +23,11 @@ export async function submitScore(name, score) {
       body: JSON.stringify({ name, score })
     });
   } catch (err) {
-    console.warn("Leaderboard error:", err);
+    console.warn("Leaderboard submit error:", err);
   }
 }
 
-/* ===== OBTENER TOP 10 ===== */
+/* ===== TOP 10 ===== */
 
 export async function getTopScores() {
   try {
@@ -42,7 +42,33 @@ export async function getTopScores() {
     );
 
     return await res.json();
-  } catch {
+  } catch (err) {
+    console.warn("Leaderboard fetch error:", err);
     return [];
   }
 }
+
+/* ===== RANK GLOBAL ===== */
+
+export async function getMyRank(score) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=id&score=gt.${score}`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+          "Prefer": "count=exact"
+        }
+      }
+    );
+
+    const count = res.headers.get("content-range")?.split("/")[1] || 0;
+    return Number(count) + 1;
+
+  } catch (err) {
+    console.warn("Rank error:", err);
+    return null;
+  }
+}
+

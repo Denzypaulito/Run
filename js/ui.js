@@ -1,5 +1,5 @@
 // js/ui.js
-import { submitScore, getTopScores } from "./leaderboard.js";
+import { submitScore, getTopScores, getMyRank } from "./leaderboard.js";
 
 const menu = document.getElementById("menu");
 const startBtn = document.getElementById("startBtn");
@@ -14,6 +14,13 @@ const highScoreEl = document.getElementById("highScore");
 
 const leaderboardBox = document.getElementById("leaderboard");
 const leaderboardList = document.getElementById("leaderboardList");
+const myRankText = document.getElementById("myRankText");
+
+const nameModal = document.getElementById("nameModal");
+const nameInput = document.getElementById("playerNameInput");
+const submitNameBtn = document.getElementById("submitNameBtn");
+
+const loader = document.getElementById("loader");
 
 let highScore = Number(localStorage.getItem("erikaHighScore")) || 0;
 let savedName = localStorage.getItem("erikaPlayerName") || "";
@@ -45,6 +52,9 @@ export function onRestart(cb) {
 export function hideMenu() {
   menu.style.display = "none";
   leaderboardBox.style.display = "none";
+  nameModal.style.display = "none";
+  loader.style.display = "none";
+  myRankText.style.display = "none";
 }
 
 export function resetMenu() {
@@ -55,12 +65,16 @@ export function resetMenu() {
   startBtn.style.display = "block";
   instructions.style.display = "block";
   finalScoreValue.textContent = "00000";
+
   leaderboardBox.style.display = "none";
+  nameModal.style.display = "none";
+  loader.style.display = "none";
+  myRankText.style.display = "none";
 }
 
 /* ===== GAME OVER ===== */
 
-export async function showGameOver(score) {
+export function showGameOver(score) {
   const finalScoreNum = Math.floor(score);
   const isNewRecord = finalScoreNum > highScore;
 
@@ -73,32 +87,56 @@ export async function showGameOver(score) {
     newRecord.style.display = "none";
   }
 
-  // ✍️ pedir nombre
-  let name = prompt("Ingresa tu nombre (máx 12):", savedName || "Player");
+  finalScoreValue.textContent = finalScoreNum.toString().padStart(5, "0");
 
-  if (!name) name = "Anon";
-  name = name.replace(/[^a-zA-Z0-9 _-]/g, "").substring(0, 12);
-
-  localStorage.setItem("erikaPlayerName", name);
-  savedName = name;
-
-  // 🌍 enviar score
-  await submitScore(name, finalScoreNum);
-
-  // 🏆 traer leaderboard
-  const scores = await getTopScores();
-  drawLeaderboard(scores, name, finalScoreNum);
-
-  // 📋 mostrar menú
   menu.style.display = "flex";
   gameOverText.style.display = "block";
   finalScore.style.display = "block";
-  finalScoreValue.textContent = finalScoreNum.toString().padStart(5, "0");
 
-  restartBtn.style.display = "block";
+  restartBtn.style.display = "none";
   startBtn.style.display = "none";
   instructions.style.display = "none";
-  leaderboardBox.style.display = "block";
+
+  nameModal.style.display = "flex";
+  leaderboardBox.style.display = "none";
+  loader.style.display = "none";
+  myRankText.style.display = "none";
+
+  nameInput.value = savedName || "";
+  nameInput.focus();
+
+  submitNameBtn.onclick = async () => {
+    let name = nameInput.value.trim();
+
+    if (!name) name = "Anon";
+    name = name.replace(/[^a-zA-Z0-9 _-]/g, "").substring(0, 12);
+
+    localStorage.setItem("erikaPlayerName", name);
+    savedName = name;
+
+    nameModal.style.display = "none";
+    loader.style.display = "flex";
+
+    await submitScore(name, finalScoreNum);
+
+    const [scores, myRank] = await Promise.all([
+      getTopScores(),
+      getMyRank(finalScoreNum)
+    ]);
+
+    drawLeaderboard(scores, name, finalScoreNum);
+
+    if (myRank > 10) {
+      myRankText.textContent = `No entraste al top 10 — quedaste en el puesto #${myRank}`;
+      myRankText.style.display = "block";
+    } else {
+      myRankText.style.display = "none";
+    }
+
+    loader.style.display = "none";
+    leaderboardBox.style.display = "block";
+    restartBtn.style.display = "block";
+  };
 }
 
 /* ===== SCORE ===== */
