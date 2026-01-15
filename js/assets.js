@@ -28,22 +28,28 @@ for (let i = 1; i <= 2; i++) {
   birdImgs.push(img);
 }
 
+/* ===== NUBE (CARA ERIKA) ===== */
+
+export const cloudFace = new Image();
+cloudFace.src = "ErikaFace.png"; // 👉 nombre exacto de tu archivo
+cloudFace.style.imageRendering = "pixelated";
+
 /* ===== LOADER ===== */
 
 let imagesLoaded = 0;
 const totalImages =
   runImgs.length +
   cactusImgs.length +
-  birdImgs.length;
+  birdImgs.length +
+  1; // 👈 cloudFace
 
 export function loadSprites(onReady) {
-
   function done() {
     imagesLoaded++;
     if (imagesLoaded === totalImages) onReady();
   }
 
-  [...runImgs, ...cactusImgs, ...birdImgs].forEach(img => {
+  [...runImgs, ...cactusImgs, ...birdImgs, cloudFace].forEach(img => {
     img.onload = done;
     img.onerror = done;
   });
