@@ -1,66 +1,71 @@
-// js/obstacles.js
-
 export function spawnObstacles(state) {
-  const {
+  let {
     obstacles,
     canvas,
     groundY,
     groundLineY,
     speed,
     score,
-    frame
+    dt,
+    obstacleTimer
   } = state;
 
-  if (frame < state.nextObstacleFrame) return;
+  obstacleTimer += dt;
 
-  const minGap = 70;
+  // ⏳ intervalo base con más variación
+  let base = Math.max(95 - speed * 3, 55);
+  let randomExtra = Math.random() * 40; // 🎲 variación
+  let spawnInterval = base + randomExtra;
 
-  let canSpawn = true;
-  if (obstacles.length > 0) {
-    const lastObs = obstacles[obstacles.length - 1];
-    if (canvas.width - lastObs.x < 25) canSpawn = false;
+  if (obstacleTimer < spawnInterval) {
+    state.obstacleTimer = obstacleTimer;
+    return;
   }
 
-  if (canSpawn) {
-    const isBird = score > 300 && Math.random() > 0.5;
+  obstacleTimer = 0;
 
-    const cactusCount = isBird
-      ? 1
-      : Math.random() < 0.6
-        ? 1
-        : Math.random() < 0.8
-          ? 2
-          : 3;
+  const isBird = score > 350 && Math.random() > 0.55;
 
-    for (let i = 0; i < cactusCount; i++) {
-      obstacles.push({
-        x: canvas.width + 10 + i * 26,
-        y: isBird
-          ? groundY - 40 - Math.random() * 30
-          : groundLineY + 2,
-        width: 26,
-        height: 30,
-        emoji: isBird ? "🦅" : "🌵",
-        passed: false,
-        isBird
-      });
-    }
+  // 🌵 patrón de cactus más natural
+  const patternRoll = Math.random();
 
-    const baseGap = Math.max(140 - Math.floor(speed) * 10, minGap);
-    state.nextObstacleFrame = frame + baseGap + Math.random() * 40;
-  } else {
-    state.nextObstacleFrame = frame + 20;
+  let cactusCount = 1;
+
+  if (!isBird) {
+    if (patternRoll < 0.65) cactusCount = 1;       // la mayoría solos
+    else if (patternRoll < 0.9) cactusCount = 2;   // a veces dobles
+    else cactusCount = 3;                          // raros triples
   }
+
+  // 🎯 separación variable entre cactus
+  let separation = 22 + Math.random() * 14;
+
+  for (let i = 0; i < cactusCount; i++) {
+    obstacles.push({
+      x: canvas.width + 10 + i * separation,
+      y: isBird
+        ? groundY - 40 - Math.random() * 35
+        : groundLineY + 2,
+      width: 26,
+      height: 30,
+      emoji: isBird ? "🦅" : "🌵",
+      passed: false,
+      isBird
+    });
+  }
+
+  state.obstacleTimer = obstacleTimer;
 }
 
+
 export function updateAndDrawObstacles(state, ctx, player, onGameOver) {
-  const { obstacles, speed } = state;
+  const { obstacles, speed, dt } = state;
 
   ctx.font = "30px Arial";
 
   for (let i = obstacles.length - 1; i >= 0; i--) {
     const obs = obstacles[i];
-    obs.x -= speed;
+    obs.x -= speed * dt;
 
     ctx.fillText(obs.emoji, Math.round(obs.x), Math.round(obs.y));
 

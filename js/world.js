@@ -1,5 +1,3 @@
-// js/world.js
-
 export function createWorld() {
   return {
     isDayMode: true,
@@ -30,7 +28,7 @@ export function initWorld(world, canvas) {
   }
 }
 
-export function updateWorld(world, score) {
+export function updateWorld(world, score, dt) {
   world.speed = world.baseSpeed + Math.floor(score / 25);
 
   const currentMilestone = Math.floor(score / 700);
@@ -41,18 +39,18 @@ export function updateWorld(world, score) {
   }
 }
 
-export function drawWorld(ctx, canvas, world, groundY) {
+export function drawWorld(ctx, canvas, world, groundY, dt) {
   const bgColor = world.isDayMode ? "#f7f7f7" : "#212121";
   const fgColor = world.isDayMode ? "#535353" : "#f7f7f7";
 
-  /* Fondo */
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   /* Nubes */
   ctx.fillStyle = world.isDayMode ? "#ccc" : "#444";
   world.clouds.forEach(cloud => {
-    cloud.x -= world.speed * 0.2;
+    cloud.x -= world.speed * 0.2 * dt;
+
     if (cloud.x + cloud.width < 0) {
       cloud.x = canvas.width;
       cloud.y = 30 + Math.random() * 60;
@@ -65,18 +63,12 @@ export function drawWorld(ctx, canvas, world, groundY) {
     ctx.fill();
   });
 
-  /* Suelo */
-  ctx.strokeStyle = fgColor;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
+  // ===== SUELO LINEA CONTINUA =====
+ctx.strokeStyle = fgColor;
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(0, groundY + 60);
+ctx.lineTo(canvas.width, groundY + 60);
+ctx.stroke();
 
-  world.groundX -= world.speed;
-  if (world.groundX <= -20) world.groundX = 0;
-
-  for (let x = world.groundX; x < canvas.width; x += 20) {
-    ctx.moveTo(x, groundY + 60);
-    ctx.lineTo(x + 10, groundY + 60);
-  }
-
-  ctx.stroke();
 }

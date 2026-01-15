@@ -51,7 +51,7 @@ const groundLineY = groundY + 60;
 /* ===== ESTADO ===== */
 let world;
 let player, obstacles, frame, score, gameOver, started;
-let nextObstacleFrame = 100;
+let obstacleTimer = 0;
 
 /* ===== INIT ===== */
 function init() {
@@ -64,7 +64,7 @@ function init() {
   frame = 0;
   score = 0;
   gameOver = false;
-  nextObstacleFrame = 80;
+  obstacleTimer = 0;
 }
 
 /* ===== CONTROLES ===== */
@@ -91,6 +91,7 @@ onStart(() => {
   hideMenu();
   started = true;
   init();
+  lastTime = 0;
   requestAnimationFrame(gameLoop);
 });
 
@@ -99,20 +100,37 @@ onRestart(() => {
   resetMenu();
   started = true;
   init();
+  lastTime = 0;
   requestAnimationFrame(gameLoop);
 });
 
+/* ===== LOOP CON TIEMPO ===== */
+let lastTime = 0;
+
+function gameLoop(time = 0) {
+  if (!started) return;
+
+  const delta = time - lastTime;
+  lastTime = time;
+
+  const dt = delta / 16.666; // normalizado a 60fps
+
+  update(dt);
+
+  if (!gameOver) requestAnimationFrame(gameLoop);
+}
+
 /* ===== UPDATE ===== */
-function update() {
+function update(dt) {
   /* Mundo */
-  updateWorld(world, score);
-  drawWorld(ctx, canvas, world, groundY);
+  updateWorld(world, score, dt);
+  drawWorld(ctx, canvas, world, groundY, dt);
 
   /* Jugador */
-  updatePlayer(player, groundY);
+  updatePlayer(player, groundY, dt);
   drawPlayer(ctx, player, spritesReady);
 
-  /* Obstáculos */
+  /* Obstáculos (por tiempo) */
   const obstacleState = {
     obstacles,
     canvas,
@@ -120,15 +138,15 @@ function update() {
     groundLineY,
     speed: world.speed,
     score,
-    frame,
-    nextObstacleFrame
+    dt,
+    obstacleTimer
   };
 
   spawnObstacles(obstacleState);
-  nextObstacleFrame = obstacleState.nextObstacleFrame;
+  obstacleTimer = obstacleState.obstacleTimer;
 
   updateAndDrawObstacles(
-    { obstacles, speed: world.speed, score },
+    { obstacles, speed: world.speed, score, dt },
     ctx,
     player,
     () => {
@@ -138,17 +156,10 @@ function update() {
   );
 
   /* Score */
-  score += 0.1;
+  score += 0.1 * dt;
   updateScore(score);
 
   frame++;
-}
-
-/* ===== LOOP ===== */
-function gameLoop() {
-  if (!started) return;
-  update();
-  if (!gameOver) requestAnimationFrame(gameLoop);
 }
 
 /* ===== MOBILE ===== */

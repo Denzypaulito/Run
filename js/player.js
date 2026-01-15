@@ -1,4 +1,3 @@
-// js/player.js
 import { runImgs } from "./assets.js";
 
 export function createPlayer(groundY) {
@@ -12,16 +11,16 @@ export function createPlayer(groundY) {
     jumpPower: -13,
     grounded: true,
     animFrame: 0,
-    animSpeed: 0.25   // velocidad de animación
+    animSpeed: 0.25
   };
 }
 
-export function updatePlayer(player, groundY) {
+export function updatePlayer(player, groundY, dt) {
   if (!player.grounded) {
-    player.vy += player.gravity;
+    player.vy += player.gravity * dt;
   }
 
-  player.y += player.vy;
+  player.y += player.vy * dt;
 
   if (player.y >= groundY) {
     player.y = groundY;
@@ -29,9 +28,8 @@ export function updatePlayer(player, groundY) {
     player.grounded = true;
   }
 
-  // Avanza animación solo si corre
   if (player.grounded) {
-    player.animFrame += player.animSpeed;
+    player.animFrame += player.animSpeed * dt;
     if (player.animFrame >= runImgs.length) {
       player.animFrame = 0;
     }
@@ -48,15 +46,11 @@ export function drawPlayer(ctx, player, spritesReady) {
   let img;
 
   if (player.grounded) {
-    // ===== CORRER (8 sprites) =====
     img = runImgs[Math.floor(player.animFrame)];
   } else {
-    // ===== SALTO: elegir entre Erikas3 o Erikas7 =====
     const frame = Math.floor(player.animFrame) % runImgs.length;
-
-    const distTo3 = Math.abs(frame - 2); // Erikas3 → índice 2
-    const distTo7 = Math.abs(frame - 6); // Erikas7 → índice 6
-
+    const distTo3 = Math.abs(frame - 2);
+    const distTo7 = Math.abs(frame - 6);
     img = distTo3 <= distTo7 ? runImgs[2] : runImgs[6];
   }
 
