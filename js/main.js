@@ -1,3 +1,7 @@
+import { runImgs, jumpImg, loadSprites } from "./assets.js";
+
+
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d", { alpha: false });
 
@@ -17,49 +21,17 @@ const instructions = document.getElementById("instructions");
 const scoreEl = document.getElementById("score");
 const highScoreEl = document.getElementById("highScore");
 
-/* ===== CARGAR SPRITES ERIKA ===== */
-const runImgs = [new Image(), new Image(), new Image()];
-runImgs[0].src = "Erika2.png";
-runImgs[1].src = "Erika4.png";
-runImgs[2].src = "Erika3.png";
-
-const jumpImg = new Image();
-jumpImg.src = "Erika4.png";
-
-let imagesLoaded = 0;
-const totalImages = 4;
-
-function imageLoaded() {
-  imagesLoaded++;
-  if (imagesLoaded === totalImages) {
-    startBtn.disabled = false;
-    startBtn.textContent = "Iniciar";
-  }
-}
-
-function imageError() {
-  imagesLoaded++;
-  if (imagesLoaded === totalImages) {
-    startBtn.disabled = false;
-    startBtn.textContent = "Iniciar";
-  }
-}
-
-runImgs[0].onload = imageLoaded;
-runImgs[0].onerror = imageError;
-runImgs[1].onload = imageLoaded;
-runImgs[1].onerror = imageError;
-runImgs[2].onload = imageLoaded;
-runImgs[2].onerror = imageError;
-jumpImg.onload = imageLoaded;
-jumpImg.onerror = imageError;
-
-[...runImgs, jumpImg].forEach(img => {
-  img.style.imageRendering = 'pixelated';
-});
-
 startBtn.disabled = true;
 startBtn.textContent = "Cargando...";
+let spritesReady = false;
+
+loadSprites(() => {
+  spritesReady = true;
+  startBtn.disabled = false;
+  startBtn.textContent = "Iniciar";
+});
+
+
 
 /* ===== VARIABLES ===== */
 const groundY = 220;
@@ -243,9 +215,9 @@ function update() {
     ctx.globalAlpha = 0.5;
   }
   
-  if (imagesLoaded === totalImages) {
-    drawPixelPerfect(img, player.x, player.y, player.width, player.height);
-  } else {
+  if (spritesReady) {
+  drawPixelPerfect(img, player.x, player.y, player.width, player.height);
+} else {
     // Fallback si no cargan las imágenes
     ctx.fillStyle = '#ff6b6b';
     ctx.fillRect(Math.round(player.x), Math.round(player.y), player.width, player.height);
