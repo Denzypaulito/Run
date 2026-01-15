@@ -11,7 +11,8 @@ const instructions = document.getElementById("instructions");
 const scoreEl = document.getElementById("score");
 const highScoreEl = document.getElementById("highScore");
 
-let highScore = parseInt(localStorage.getItem("erikaHighScore") || "0");
+let highScore = Number(localStorage.getItem("erikaHighScore")) || 0;
+
 highScoreEl.textContent = highScore.toString().padStart(5, "0");
 
 export function setLoading() {
@@ -43,6 +44,7 @@ export function resetMenu() {
   restartBtn.style.display = "none";
   startBtn.style.display = "block";
   instructions.style.display = "block";
+  finalScoreValue.textContent = "00000"; 
 }
 
 export function showGameOver(score) {

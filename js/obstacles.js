@@ -52,22 +52,24 @@ export function spawnObstacles(state) {
       ? randomFrom(birdImgs)
       : randomFrom(cactusImgs);
 
-    // 🐦 alturas impredecibles
     let y;
 
     if (isBird) {
       const hRoll = Math.random();
 
-      if (hRoll < 0.4) {
-        // alto
-        y = groundY - 95 - Math.random() * 35;
-      } else if (hRoll < 0.75) {
-        // medio
-        y = groundY - 60 - Math.random() * 30;
+      if (hRoll < 0.33) {
+        // 🔴 ALTO → salto largo
+        y = groundY - 95 - Math.random() * 20;
+
+      } else if (hRoll < 0.66) {
+        // 🟡 MEDIO → LIMBO CLARO 🔥
+        y = groundY - 48 - Math.random() * 10;
+
       } else {
-        // casi cactus
-        y = groundLineY - 42;
+        // 🟢 BAJO → salto corto
+        y = groundY - 18 - Math.random() * 8;
       }
+
     } else {
       // cactus normal
       y = groundLineY - 42;

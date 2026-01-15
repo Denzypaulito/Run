@@ -19,10 +19,9 @@ export function createPlayer(groundY) {
     grounded: true,
 
     animFrame: 0,
-    animSpeed: 0.12,      // 🔥 base lenta
+    animSpeed: 0.12,
     isCrouching: false,
 
-    // 🪂 FAST FALL
     fastFall: false,
     fastFallMultiplier: 2.5
   };
@@ -32,7 +31,7 @@ export function createPlayer(groundY) {
 
 export function updatePlayer(player, groundY, dt, worldSpeed = 6) {
 
-  // gravedad normal / caída rápida
+  /* --- FÍSICA --- */
   if (!player.grounded) {
     const g = player.fastFall
       ? player.gravity * player.fastFallMultiplier
@@ -47,10 +46,21 @@ export function updatePlayer(player, groundY, dt, worldSpeed = 6) {
     player.y = groundY;
     player.vy = 0;
     player.grounded = true;
-    player.fastFall = false; // 🔥 se resetea al tocar suelo
+    player.fastFall = false;
   }
 
-  // animación ligada a velocidad del mundo
+  /* --- LIMBO REAL (solo en el suelo) --- */
+  if (player.grounded) {
+    if (player.isCrouching) {
+      player.height = player.crouchHeight;
+      player.y = groundY + (player.normalHeight - player.crouchHeight);
+    } else {
+      player.height = player.normalHeight;
+      player.y = groundY;
+    }
+  }
+
+  /* --- ANIMACIÓN --- */
   if (player.grounded && !player.isCrouching) {
     const speedFactor = 0.6 + worldSpeed / 10;
     player.animFrame += player.animSpeed * speedFactor * dt;
@@ -70,33 +80,24 @@ export function drawPlayer(ctx, player, spritesReady) {
   if (player.grounded) {
     img = runImgs[Math.floor(player.animFrame)];
   } else {
-    // salto → frame más cercano a 3 o 7
     const frame = Math.floor(player.animFrame) % runImgs.length;
     const distTo3 = Math.abs(frame - 2);
     const distTo7 = Math.abs(frame - 6);
     img = distTo3 <= distTo7 ? runImgs[2] : runImgs[6];
   }
 
-  const drawHeight = player.isCrouching
-    ? player.crouchHeight
-    : player.normalHeight;
-
-  const offsetY = player.normalHeight - drawHeight;
-
   if (spritesReady && img.complete) {
     ctx.drawImage(
       img,
       Math.round(player.x),
-      Math.round(player.y + offsetY),
+      Math.round(player.y),
       player.width,
-      drawHeight
+      player.height
     );
   } else {
     ctx.fillStyle = "#ff6b6b";
-    ctx.fillRect(player.x, player.y + offsetY, player.width, drawHeight);
+    ctx.fillRect(player.x, player.y, player.width, player.height);
   }
-
-  player.height = drawHeight;
 }
 
 /* ===== ACTIONS ===== */
@@ -110,12 +111,12 @@ export function playerJump(player) {
 
 export function playerCrouch(player, isDown) {
 
-  // 🪂 si está en el aire → caída rápida
+  // 🪂 en el aire → caída rápida
   if (!player.grounded) {
     player.fastFall = isDown;
     return;
   }
 
-  // 🧎 si está en el suelo → limbo
+  // 🧎 en el suelo → limbo
   player.isCrouching = isDown;
 }
