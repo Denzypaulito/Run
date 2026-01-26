@@ -27,6 +27,11 @@ body.night {
   color: #f7f7f7;
 }
 
+body.space {
+  background: #05070f;
+  color: #f7f7f7;
+}
+
 #container {
   position: relative;
   width: 100%;
@@ -73,6 +78,10 @@ body.night #hud {
   color: #f7f7f7;
 }
 
+body.space #hud {
+  color: #f7f7f7;
+}
+
 #menu {
   position: absolute;
   inset: 0;
@@ -92,6 +101,10 @@ body.game-over.day #menu {
 
 body.game-over.night #menu {
   background: rgba(33, 33, 33, 0.7);
+}
+
+body.game-over.space #menu {
+  background: rgba(5, 7, 15, 0.7);
 }
 
 #menu h1 {
@@ -180,6 +193,11 @@ body.day button {
 }
 
 body.night button {
+  background: #535353;
+  color: #f7f7f7;
+}
+
+body.space button {
   background: #f7f7f7;
   color: #212121;
 }

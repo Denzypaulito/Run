@@ -116,7 +116,8 @@ export function updateFlappyDemo(state, dt, canvas) {
 export function drawFlappy(ctx, state, canvas) {
   const { bird, pipes, clouds } = state;
 
-  ctx.fillStyle = "#cfefff";
+  const theme = getThemeColors();
+  ctx.fillStyle = theme.bg;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   clouds.forEach(cloud => {
@@ -147,9 +148,9 @@ export function drawFlappy(ctx, state, canvas) {
     ctx.restore();
   });
 
-  ctx.fillStyle = "#4fae5a";
+  ctx.fillStyle = theme.grassTop;
   ctx.fillRect(0, canvas.height - 18, canvas.width, 3);
-  ctx.fillStyle = "#6ecf6a";
+  ctx.fillStyle = theme.grass;
   ctx.fillRect(0, canvas.height - 15, canvas.width, 15);
 
   pipes.forEach(pipe => {
@@ -157,6 +158,32 @@ export function drawFlappy(ctx, state, canvas) {
   });
 
   drawBird(ctx, bird);
+}
+
+function getThemeColors() {
+  const body = document.body.classList;
+
+  if (body.contains("space")) {
+    return {
+      bg: "#05070f",
+      grassTop: "#0b152b",
+      grass: "#1b2b4a"
+    };
+  }
+
+  if (body.contains("night")) {
+    return {
+      bg: "#212121",
+      grassTop: "#2f6a35",
+      grass: "#3d8a45"
+    };
+  }
+
+  return {
+    bg: "#f7f7f7",
+    grassTop: "#4fae5a",
+    grass: "#6ecf6a"
+  };
 }
 
 function createCloud(canvas) {

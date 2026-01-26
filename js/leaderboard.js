@@ -3,7 +3,8 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 
 const TABLES = {
   run: "scores",
-  flappy: "flappy_scores"
+  flappy: "flappy_scores",
+  gravity: "gravity_scores"
 };
 
 export function getTableForMode(mode) {
@@ -97,4 +98,3 @@ export async function getFullLeaderboard(limit = 100, table = TABLES.run) {
     return [];
   }
 }
-

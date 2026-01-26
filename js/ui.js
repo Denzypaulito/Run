@@ -25,6 +25,7 @@ const highScoreEl = document.getElementById("highScore");
 const gameSelect = document.getElementById("gameSelect");
 const selectRunBtn = document.getElementById("selectRunBtn");
 const selectFlappyBtn = document.getElementById("selectFlappyBtn");
+const selectGravityBtn = document.getElementById("selectGravityBtn");
 
 const leaderboardBox = document.getElementById("leaderboard");
 const leaderboardList = document.getElementById("leaderboardList");
@@ -46,7 +47,8 @@ const loader = document.getElementById("loader");
 
 const highScores = {
   run: Number(localStorage.getItem("erikaHighScore")) || 0,
-  flappy: Number(localStorage.getItem("flappyHighScore")) || 0
+  flappy: Number(localStorage.getItem("flappyHighScore")) || 0,
+  gravity: Number(localStorage.getItem("gravityHighScore")) || 0
 };
 let savedName = localStorage.getItem("erikaPlayerName") || "";
 let currentMode = "run";
@@ -85,6 +87,7 @@ export function onBackToMenu(cb) {
 export function onSelectGame(cb) {
   selectRunBtn.onclick = () => cb("run");
   selectFlappyBtn.onclick = () => cb("flappy");
+  selectGravityBtn.onclick = () => cb("gravity");
 }
 
 export function setGameMode(mode) {
@@ -93,13 +96,23 @@ export function setGameMode(mode) {
   if (mode === "run") {
     gameTitle.textContent = "ERIKA RUN";
     instructions.textContent = "Presiona ESPACIO o toca para saltar";
-  } else {
+    document.body.classList.remove("space", "night");
+    document.body.classList.add("day");
+  } else if (mode === "flappy") {
     gameTitle.textContent = "FLAPPY ERIKA";
     instructions.textContent = "Presiona ESPACIO o toca para volar";
+    document.body.classList.remove("space", "night");
+    document.body.classList.add("day");
+  } else {
+    gameTitle.textContent = "ERIKA GRAVITY";
+    instructions.textContent = "Presiona ESPACIO o toca para invertir gravedad";
+    document.body.classList.remove("day", "night");
+    document.body.classList.add("space");
   }
 
   selectRunBtn.classList.toggle("active", mode === "run");
   selectFlappyBtn.classList.toggle("active", mode === "flappy");
+  selectGravityBtn.classList.toggle("active", mode === "gravity");
   updateHighScoreDisplay();
 }
 
@@ -155,8 +168,10 @@ export function showGameOver(score, mode = currentMode) {
 
     if (currentMode === "run") {
       localStorage.setItem("erikaHighScore", finalScoreNum.toString());
-    } else {
+    } else if (currentMode === "flappy") {
       localStorage.setItem("flappyHighScore", finalScoreNum.toString());
+    } else {
+      localStorage.setItem("gravityHighScore", finalScoreNum.toString());
     }
 
     updateHighScoreDisplay();

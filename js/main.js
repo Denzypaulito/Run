@@ -38,6 +38,16 @@ import {
   flap,
   updateFlappyDemo
 } from "./flappy.js";
+import {
+  createGravityState,
+  initGravity,
+  initGravityDemo,
+  updateGravity,
+  drawGravity,
+  updateGravityDemo,
+  toggleGravity,
+  gravityCrouch
+} from "./gravity.js";
 
 /* ===== CANVAS ===== */
 const canvas = document.getElementById("game");
@@ -75,6 +85,7 @@ const groundLineY = groundY + 60;
 let world;
 let player, obstacles, frame, score, gameOver, started;
 let flappyState;
+let gravityState;
 let obstacleTimer = 0;
 let demoAnimationId = null;
 let demoScore = 0;
@@ -131,10 +142,30 @@ function initFlappyGame() {
   updateScore(0);
 }
 
+function initGravityGame() {
+  gravityState = createGravityState(canvas);
+  initGravity(gravityState, canvas);
+
+  frame = 0;
+  score = 0;
+  gameOver = false;
+
+  paused = false;
+  countingDown = false;
+  countdown = 3;
+
+  pauseOverlay.style.display = "none";
+  pauseBtn.style.display = "block";
+
+  updateScore(0);
+}
+
 function initGame() {
   const mode = getGameMode();
   if (mode === "flappy") {
     initFlappyGame();
+  } else if (mode === "gravity") {
+    initGravityGame();
   } else {
     initRun();
   }
@@ -157,6 +188,11 @@ function initFlappyDemo() {
   flappyState.pipes = [];
 }
 
+function initGravityMenuDemo() {
+  gravityState = createGravityState(canvas);
+  initGravityDemo(gravityState, canvas);
+}
+
 /* ===== CONTROLES ===== */
 function jump() {
   if (!started || gameOver || paused || countingDown) return;
@@ -164,6 +200,11 @@ function jump() {
   const mode = getGameMode();
   if (mode === "flappy") {
     flap(flappyState);
+    return;
+  }
+
+  if (mode === "gravity") {
+    toggleGravity(gravityState);
     return;
   }
 
@@ -197,8 +238,13 @@ document.addEventListener("keydown", e => {
   }
 
   if (e.code === "ArrowDown" || e.code === "KeyS") {
-    e.preventDefault();
-    playerCrouch(player, true);
+    if (getGameMode() === "run") {
+      e.preventDefault();
+      playerCrouch(player, true);
+    } else if (getGameMode() === "gravity") {
+      e.preventDefault();
+      if (gravityState) gravityCrouch(gravityState, true);
+    }
   }
 
   if (e.code === "Escape" || e.code === "KeyP") {
@@ -208,7 +254,11 @@ document.addEventListener("keydown", e => {
 
 document.addEventListener("keyup", e => {
   if (e.code === "ArrowDown" || e.code === "KeyS") {
-    playerCrouch(player, false);
+    if (getGameMode() === "run") {
+      playerCrouch(player, false);
+    } else if (getGameMode() === "gravity") {
+      if (gravityState) gravityCrouch(gravityState, false);
+    }
   }
 });
 
@@ -390,6 +440,24 @@ function update(dt) {
     return;
   }
 
+  if (mode === "gravity") {
+    const dead = updateGravity(gravityState, dt);
+    drawGravity(ctx, gravityState, spritesReady);
+
+    score = gravityState.score;
+    updateScore(score);
+
+    if (dead) {
+      gameOver = true;
+      pauseBtn.style.display = "none";
+      showGameOver(score, "gravity");
+      return;
+    }
+
+    frame++;
+    return;
+  }
+
   updateWorld(world, score);
   drawWorld(ctx, canvas, world, groundY, dt);
 
@@ -434,6 +502,8 @@ function startDemo() {
   const mode = getGameMode();
   if (mode === "flappy") {
     initFlappyDemo();
+  } else if (mode === "gravity") {
+    initGravityMenuDemo();
   } else {
     initRunDemo();
   }
@@ -449,6 +519,9 @@ function startDemo() {
     if (getGameMode() === "flappy") {
       updateFlappyDemo(flappyState, dt, canvas);
       drawFlappy(ctx, flappyState, canvas);
+    } else if (getGameMode() === "gravity") {
+      updateGravityDemo(gravityState, dt);
+      drawGravity(ctx, gravityState, spritesReady);
     } else {
       demoScore += 0.05 * dt;
       updateWorld(world, demoScore);
