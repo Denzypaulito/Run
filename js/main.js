@@ -51,6 +51,9 @@ const pauseText = document.getElementById("pauseText");
 const countdownText = document.getElementById("countdownText");
 const resumeBtn = document.getElementById("resumeBtn");
 const pauseMenuBtn = document.getElementById("pauseMenuBtn");
+const menu = document.getElementById("menu");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
 
 /* 🔥 oculto desde que carga la página */
 pauseBtn.style.display = "none";
@@ -167,9 +170,29 @@ function jump() {
   playerJump(player);
 }
 
+function isMenuOpen() {
+  return window.getComputedStyle(menu).display !== "none";
+}
+
+function isStartVisible() {
+  return window.getComputedStyle(startBtn).display !== "none";
+}
+
+function isRestartVisible() {
+  return window.getComputedStyle(restartBtn).display !== "none";
+}
+
 document.addEventListener("keydown", e => {
   if (e.code === "Space") {
     e.preventDefault();
+    if (!started && isMenuOpen() && isStartVisible()) {
+      startBtn.click();
+      return;
+    }
+    if (gameOver && isMenuOpen() && isRestartVisible()) {
+      restartBtn.click();
+      return;
+    }
     jump();
   }
 
@@ -189,9 +212,26 @@ document.addEventListener("keyup", e => {
   }
 });
 
-canvas.addEventListener("click", jump);
-canvas.addEventListener("touchstart", e => {
+function isInteractiveTarget(target) {
+  return target.closest("button, input, #pauseOverlay");
+}
+
+document.addEventListener("click", e => {
+  if (isInteractiveTarget(e.target)) return;
+  if (!started && isMenuOpen() && isStartVisible()) {
+    startBtn.click();
+    return;
+  }
+  jump();
+});
+
+document.addEventListener("touchstart", e => {
+  if (isInteractiveTarget(e.target)) return;
   e.preventDefault();
+  if (!started && isMenuOpen() && isStartVisible()) {
+    startBtn.click();
+    return;
+  }
   jump();
 }, { passive: false });
 
