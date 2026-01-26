@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Erika Run</title>
+<title>Erika Games</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 
@@ -25,18 +25,28 @@
     <p id="pauseText">PAUSA</p>
     <p id="countdownText"></p>
     <button id="resumeBtn">Continuar</button>
+    <button id="pauseMenuBtn">Menú</button>
   </div>
 
   <!-- ===== MENÚ PRINCIPAL ===== -->
   <div id="menu">
-    <h1>ERIKA RUN</h1>
+    <h1 id="gameTitle">ERIKA RUN</h1>
     <p id="gameOverText">GAME OVER</p>
     <p id="finalScore">SCORE: <span id="finalScoreValue">0</span></p>
     <p id="newRecord">★ NEW RECORD! ★</p>
     <p id="instructions">Presiona ESPACIO o toca para saltar</p>
 
+    <div id="gameSelect">
+      <p>Elige un juego</p>
+      <div id="gameSelectButtons">
+        <button id="selectRunBtn">Erika Run</button>
+        <button id="selectFlappyBtn">Flappy Erika</button>
+      </div>
+    </div>
+
     <button id="startBtn">Iniciar</button>
     <button id="restartBtn">Reintentar</button>
+    <button id="backToMenuBtn">Volver al menú</button>
 
     <!-- LEADERBOARD -->
     <div id="leaderboard" style="display:none; margin-top:12px;">

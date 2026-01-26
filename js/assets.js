@@ -28,6 +28,8 @@ for (let i = 1; i <= 2; i++) {
   birdImgs.push(img);
 }
 
+export const flappyBirdImg = birdImgs[0];
+
 /* ===== NUBE (CARA ERIKA) ===== */
 
 export const cloudFace = new Image();

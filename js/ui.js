@@ -3,7 +3,8 @@ import {
   submitScore,
   getTopScores,
   getMyRank,
-  getFullLeaderboard
+  getFullLeaderboard,
+  getTableForMode
 } from "./leaderboard.js";
 
 /* ===== ELEMENTOS ===== */
@@ -11,6 +12,8 @@ import {
 const menu = document.getElementById("menu");
 const startBtn = document.getElementById("startBtn");
 const restartBtn = document.getElementById("restartBtn");
+const backToMenuBtn = document.getElementById("backToMenuBtn");
+const gameTitle = document.getElementById("gameTitle");
 const gameOverText = document.getElementById("gameOverText");
 const finalScore = document.getElementById("finalScore");
 const finalScoreValue = document.getElementById("finalScoreValue");
@@ -18,6 +21,10 @@ const newRecord = document.getElementById("newRecord");
 const instructions = document.getElementById("instructions");
 const scoreEl = document.getElementById("score");
 const highScoreEl = document.getElementById("highScore");
+
+const gameSelect = document.getElementById("gameSelect");
+const selectRunBtn = document.getElementById("selectRunBtn");
+const selectFlappyBtn = document.getElementById("selectFlappyBtn");
 
 const leaderboardBox = document.getElementById("leaderboard");
 const leaderboardList = document.getElementById("leaderboardList");
@@ -37,10 +44,19 @@ const loader = document.getElementById("loader");
 
 /* ===== LOCAL STORAGE ===== */
 
-let highScore = Number(localStorage.getItem("erikaHighScore")) || 0;
+const highScores = {
+  run: Number(localStorage.getItem("erikaHighScore")) || 0,
+  flappy: Number(localStorage.getItem("flappyHighScore")) || 0
+};
 let savedName = localStorage.getItem("erikaPlayerName") || "";
+let currentMode = "run";
 
-highScoreEl.textContent = highScore.toString().padStart(5, "0");
+function updateHighScoreDisplay() {
+  highScoreEl.textContent = highScores[currentMode].toString().padStart(5, "0");
+}
+
+updateHighScoreDisplay();
+document.body.classList.add("menu-demo");
 
 /* ===== BOTONES ===== */
 
@@ -62,43 +78,88 @@ export function onRestart(cb) {
   restartBtn.onclick = cb;
 }
 
+export function onBackToMenu(cb) {
+  backToMenuBtn.onclick = cb;
+}
+
+export function onSelectGame(cb) {
+  selectRunBtn.onclick = () => cb("run");
+  selectFlappyBtn.onclick = () => cb("flappy");
+}
+
+export function setGameMode(mode) {
+  currentMode = mode;
+
+  if (mode === "run") {
+    gameTitle.textContent = "ERIKA RUN";
+    instructions.textContent = "Presiona ESPACIO o toca para saltar";
+  } else {
+    gameTitle.textContent = "FLAPPY ERIKA";
+    instructions.textContent = "Presiona ESPACIO o toca para volar";
+  }
+
+  selectRunBtn.classList.toggle("active", mode === "run");
+  selectFlappyBtn.classList.toggle("active", mode === "flappy");
+  updateHighScoreDisplay();
+}
+
+export function getGameMode() {
+  return currentMode;
+}
+
 /* ===== MENÚ ===== */
 
 export function hideMenu() {
   menu.style.display = "none";
+  gameSelect.style.display = "none";
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   nameModal.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
+  document.body.classList.remove("menu-demo");
+  document.body.classList.remove("game-over");
 }
 
 export function resetMenu() {
+  menu.style.display = "flex";
   gameOverText.style.display = "none";
   finalScore.style.display = "none";
   newRecord.style.display = "none";
   restartBtn.style.display = "none";
+  backToMenuBtn.style.display = "none";
   startBtn.style.display = "block";
   instructions.style.display = "block";
   finalScoreValue.textContent = "00000";
+  gameSelect.style.display = "flex";
 
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   nameModal.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
+  document.body.classList.add("menu-demo");
+  document.body.classList.remove("game-over");
 }
 
 /* ===== GAME OVER ===== */
 
-export function showGameOver(score) {
+export function showGameOver(score, mode = currentMode) {
+  currentMode = mode;
+  const table = getTableForMode(currentMode);
   const finalScoreNum = Math.floor(score);
-  const isNewRecord = finalScoreNum > highScore;
+  const isNewRecord = finalScoreNum > highScores[currentMode];
 
   if (isNewRecord) {
-    highScore = finalScoreNum;
-    localStorage.setItem("erikaHighScore", highScore.toString());
-    highScoreEl.textContent = highScore.toString().padStart(5, "0");
+    highScores[currentMode] = finalScoreNum;
+
+    if (currentMode === "run") {
+      localStorage.setItem("erikaHighScore", finalScoreNum.toString());
+    } else {
+      localStorage.setItem("flappyHighScore", finalScoreNum.toString());
+    }
+
+    updateHighScoreDisplay();
     newRecord.style.display = "block";
   } else {
     newRecord.style.display = "none";
@@ -111,13 +172,17 @@ export function showGameOver(score) {
   finalScore.style.display = "block";
 
   restartBtn.style.display = "none";
+  backToMenuBtn.style.display = "block";
   startBtn.style.display = "none";
   instructions.style.display = "none";
+  gameSelect.style.display = "none";
 
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
+  document.body.classList.remove("menu-demo");
+  document.body.classList.add("game-over");
 
   /* ===============================
      👉 SOLO SI ES NUEVO RÉCORD
@@ -139,14 +204,14 @@ export function showGameOver(score) {
       nameModal.style.display = "none";
       loader.style.display = "flex";
 
-      await submitScore(name, finalScoreNum);
+      await submitScore(name, finalScoreNum, table);
 
     // pequeño buffer para evitar latencia fantasma
     await new Promise(r => setTimeout(r, 250));
         
     const [scores, myRank] = await Promise.all([
-      getTopScores(),
-      getMyRank(finalScoreNum)
+      getTopScores(table),
+      getMyRank(finalScoreNum, table)
     ]);
 
       finishLeaderboard(scores, myRank, name, finalScoreNum);
@@ -160,10 +225,10 @@ export function showGameOver(score) {
     loader.style.display = "flex";
 
     Promise.all([
-      getTopScores(),
-      getMyRank(finalScoreNum)
+      getTopScores(table),
+      getMyRank(finalScoreNum, table)
     ]).then(([scores, myRank]) => {
-      finishLeaderboard(scores, myRank, savedName, highScore);
+      finishLeaderboard(scores, myRank, savedName, finalScoreNum);
     });
   }
 }
@@ -225,7 +290,7 @@ openFullLbBtn.onclick = async () => {
   myRankText.style.display = "none";
   loader.style.display = "flex";
 
-  const scores = await getFullLeaderboard(100);
+  const scores = await getFullLeaderboard(100, getTableForMode(currentMode));
   drawFullLeaderboard(scores);
 
   loader.style.display = "none";

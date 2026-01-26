@@ -7,7 +7,11 @@ import {
   hideMenu,
   resetMenu,
   showGameOver,
-  updateScore
+  updateScore,
+  onSelectGame,
+  onBackToMenu,
+  setGameMode,
+  getGameMode
 } from "./ui.js";
 import {
   createPlayer,
@@ -26,6 +30,14 @@ import {
   updateWorld,
   drawWorld
 } from "./world.js";
+import {
+  createFlappyState,
+  initFlappy,
+  updateFlappy,
+  drawFlappy,
+  flap,
+  updateFlappyDemo
+} from "./flappy.js";
 
 /* ===== CANVAS ===== */
 const canvas = document.getElementById("game");
@@ -38,6 +50,7 @@ const pauseOverlay = document.getElementById("pauseOverlay");
 const pauseText = document.getElementById("pauseText");
 const countdownText = document.getElementById("countdownText");
 const resumeBtn = document.getElementById("resumeBtn");
+const pauseMenuBtn = document.getElementById("pauseMenuBtn");
 
 /* 🔥 oculto desde que carga la página */
 pauseBtn.style.display = "none";
@@ -58,7 +71,10 @@ const groundLineY = groundY + 60;
 /* ===== ESTADO ===== */
 let world;
 let player, obstacles, frame, score, gameOver, started;
+let flappyState;
 let obstacleTimer = 0;
+let demoAnimationId = null;
+let demoScore = 0;
 
 /* ===== LOOP CONTROL ===== */
 let lastTime = 0;
@@ -70,7 +86,7 @@ let countingDown = false;
 let countdown = 3;
 
 /* ===== INIT ===== */
-function init() {
+function initRun() {
   world = createWorld();
   initWorld(world, canvas);
 
@@ -94,9 +110,60 @@ function init() {
   updateScore(0);
 }
 
+function initFlappyGame() {
+  flappyState = createFlappyState(canvas);
+  initFlappy(flappyState, canvas);
+
+  frame = 0;
+  score = 0;
+  gameOver = false;
+
+  paused = false;
+  countingDown = false;
+  countdown = 3;
+
+  pauseOverlay.style.display = "none";
+  pauseBtn.style.display = "block";
+
+  updateScore(0);
+}
+
+function initGame() {
+  const mode = getGameMode();
+  if (mode === "flappy") {
+    initFlappyGame();
+  } else {
+    initRun();
+  }
+}
+
+function initRunDemo() {
+  world = createWorld();
+  initWorld(world, canvas);
+
+  player = createPlayer(groundY);
+  player.animFrame = 0;
+  player.fastFall = false;
+
+  demoScore = 0;
+}
+
+function initFlappyDemo() {
+  flappyState = createFlappyState(canvas);
+  initFlappy(flappyState, canvas);
+  flappyState.pipes = [];
+}
+
 /* ===== CONTROLES ===== */
 function jump() {
   if (!started || gameOver || paused || countingDown) return;
+
+  const mode = getGameMode();
+  if (mode === "flappy") {
+    flap(flappyState);
+    return;
+  }
+
   playerJump(player);
 }
 
@@ -132,6 +199,7 @@ canvas.addEventListener("touchstart", e => {
 
 pauseBtn.onclick = togglePause;
 resumeBtn.onclick = startCountdown;
+pauseMenuBtn.onclick = goToMenu;
 
 function togglePause() {
   if (!started || gameOver || countingDown) return;
@@ -139,6 +207,7 @@ function togglePause() {
   if (!paused) {
     paused = true;
     pauseOverlay.style.display = "flex";
+    pauseText.textContent = "PAUSA";
     pauseText.style.display = "block";
     countdownText.textContent = "";
     resumeBtn.style.display = "block";
@@ -153,6 +222,26 @@ function startCountdown() {
   resumeBtn.style.display = "none";
   countingDown = true;
   countdown = 3;
+  runCountdown();
+}
+
+function startGameCountdown() {
+  paused = false;
+  countingDown = true;
+  countdown = 3;
+
+  if (getGameMode() === "flappy" && flappyState) {
+    drawFlappy(ctx, flappyState, canvas);
+    updateScore(0);
+  }
+
+  pauseOverlay.style.display = "flex";
+  pauseText.textContent = "PREPARA";
+  pauseText.style.display = "block";
+  countdownText.textContent = "";
+  resumeBtn.style.display = "none";
+  pauseBtn.style.display = "none";
+
   runCountdown();
 }
 
@@ -177,23 +266,42 @@ function runCountdown() {
 }
 
 /* ===== UI EVENTS ===== */
+onSelectGame(mode => {
+  const current = getGameMode();
+  if (mode === current) return;
+
+  setGameMode(mode);
+  resetMenu();
+  startDemo();
+});
+
+setGameMode(getGameMode());
+startDemo();
+
 onStart(() => {
   hideMenu();
   if (animationId) cancelAnimationFrame(animationId);
+  stopDemo();
 
   started = true;
-  init();
+  initGame();
+  if (getGameMode() === "flappy") startGameCountdown();
   lastTime = performance.now();
   animationId = requestAnimationFrame(gameLoop);
 });
 
+onBackToMenu(() => {
+  goToMenu();
+});
+
 onRestart(() => {
   hideMenu();
-  resetMenu();
   if (animationId) cancelAnimationFrame(animationId);
+  stopDemo();
 
   started = true;
-  init();
+  initGame();
+  if (getGameMode() === "flappy") startGameCountdown();
   lastTime = performance.now();
   animationId = requestAnimationFrame(gameLoop);
 });
@@ -222,6 +330,26 @@ function gameLoop(time = 0) {
 
 /* ===== UPDATE ===== */
 function update(dt) {
+  const mode = getGameMode();
+
+  if (mode === "flappy") {
+    const dead = updateFlappy(flappyState, dt, canvas);
+    drawFlappy(ctx, flappyState, canvas);
+
+    score = flappyState.score;
+    updateScore(score);
+
+    if (dead) {
+      gameOver = true;
+      pauseBtn.style.display = "none";
+      showGameOver(score, "flappy");
+      return;
+    }
+
+    frame++;
+    return;
+  }
+
   updateWorld(world, score);
   drawWorld(ctx, canvas, world, groundY, dt);
 
@@ -249,13 +377,69 @@ function update(dt) {
     () => {
       gameOver = true;
       pauseBtn.style.display = "none"; // ✅ se oculta en game over
-      showGameOver(score);
+      showGameOver(score, "run");
     }
   );
 
   score += 0.1 * dt;
   updateScore(score);
   frame++;
+}
+
+/* ===== DEMO LOOP (MENU) ===== */
+function startDemo() {
+  if (started) return;
+  stopDemo();
+
+  const mode = getGameMode();
+  if (mode === "flappy") {
+    initFlappyDemo();
+  } else {
+    initRunDemo();
+  }
+
+  let last = performance.now();
+  demoAnimationId = requestAnimationFrame(function loop(time) {
+    if (started) return;
+
+    const delta = Math.min(60, time - last);
+    last = time;
+    const dt = delta / 16.666;
+
+    if (getGameMode() === "flappy") {
+      updateFlappyDemo(flappyState, dt, canvas);
+      drawFlappy(ctx, flappyState, canvas);
+    } else {
+      demoScore += 0.05 * dt;
+      updateWorld(world, demoScore);
+      drawWorld(ctx, canvas, world, groundY, dt);
+      updatePlayer(player, groundY, dt, world.speed);
+      drawPlayer(ctx, player, spritesReady);
+    }
+
+    demoAnimationId = requestAnimationFrame(loop);
+  });
+}
+
+function stopDemo() {
+  if (demoAnimationId) cancelAnimationFrame(demoAnimationId);
+  demoAnimationId = null;
+}
+
+function goToMenu() {
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = null;
+
+  started = false;
+  gameOver = false;
+  paused = false;
+  countingDown = false;
+
+  pauseOverlay.style.display = "none";
+  pauseBtn.style.display = "none";
+
+  resetMenu();
+  startDemo();
 }
 
 /* ===== MOBILE ===== */
