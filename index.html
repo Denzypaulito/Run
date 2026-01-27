@@ -11,10 +11,27 @@
 
 <div id="container">
   <div id="canvasWrapper">
-  <canvas id="game" width="800" height="300"></canvas>
+  <div id="singleView">
+    <canvas id="game" width="800" height="300"></canvas>
 
-  <div id="hud">
-    HI <span id="highScore">00000</span> <span id="score">00000</span>
+    <div id="hud">
+      HI <span id="highScore">00000</span> <span id="score">00000</span>
+    </div>
+  </div>
+
+  <div id="multiView" style="display:none;">
+    <div class="playerView">
+      <canvas id="gameP1" width="800" height="300"></canvas>
+      <div class="hud playerHud">
+        <span id="p1Name">P1</span> <span id="p1Time">000.0</span>
+      </div>
+    </div>
+    <div class="playerView">
+      <canvas id="gameP2" width="800" height="300"></canvas>
+      <div class="hud playerHud">
+        <span id="p2Name">P2</span> <span id="p2Time">000.0</span>
+      </div>
+    </div>
   </div>
 
   <!-- BOTÓN DE PAUSA -->
@@ -26,6 +43,12 @@
     <p id="countdownText"></p>
     <button id="resumeBtn">Continuar</button>
     <button id="pauseMenuBtn">Menú</button>
+  </div>
+
+  <!-- ROTATION HINT -->
+  <div id="rotateHint" style="display:none;">
+    <p>Para mejor experiencia, gira tu teléfono</p>
+    <button id="dismissRotateBtn">Seguir en vertical</button>
   </div>
 
   <!-- ===== MENÚ PRINCIPAL ===== -->
@@ -42,6 +65,14 @@
         <button id="selectRunBtn">Erika Run</button>
         <button id="selectFlappyBtn">Flappy Erika</button>
         <button id="selectGravityBtn">Erika Gravity</button>
+      </div>
+    </div>
+
+    <div id="playModeSelect">
+      <p>Modo</p>
+      <div id="playModeButtons">
+        <button id="singleModeBtn">1 Jugador</button>
+        <button id="multiModeBtn">2 Jugadores</button>
       </div>
     </div>
 
@@ -70,6 +101,17 @@
       <p>Ingresa tu nombre</p>
       <input id="playerNameInput" type="text" maxlength="12" placeholder="Player">
       <button id="submitNameBtn">Enviar</button>
+    </div>
+
+    <div id="multiNameModal" style="display:none;">
+      <p>Nombres de jugadores</p>
+      <input id="player1NameInput" type="text" maxlength="12" placeholder="Jugador 1">
+      <input id="player2NameInput" type="text" maxlength="12" placeholder="Jugador 2">
+      <button id="startMultiBtn">Guardar</button>
+    </div>
+
+    <div id="winnerBox" style="display:none;">
+      <p id="winnerText"></p>
     </div>
 
     <!-- LOADER -->

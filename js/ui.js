@@ -27,6 +27,10 @@ const selectRunBtn = document.getElementById("selectRunBtn");
 const selectFlappyBtn = document.getElementById("selectFlappyBtn");
 const selectGravityBtn = document.getElementById("selectGravityBtn");
 
+const playModeSelect = document.getElementById("playModeSelect");
+const singleModeBtn = document.getElementById("singleModeBtn");
+const multiModeBtn = document.getElementById("multiModeBtn");
+
 const leaderboardBox = document.getElementById("leaderboard");
 const leaderboardList = document.getElementById("leaderboardList");
 const myRankText = document.getElementById("myRankText");
@@ -41,6 +45,14 @@ const nameModal = document.getElementById("nameModal");
 const nameInput = document.getElementById("playerNameInput");
 const submitNameBtn = document.getElementById("submitNameBtn");
 
+const multiNameModal = document.getElementById("multiNameModal");
+const player1NameInput = document.getElementById("player1NameInput");
+const player2NameInput = document.getElementById("player2NameInput");
+const startMultiBtn = document.getElementById("startMultiBtn");
+
+const winnerBox = document.getElementById("winnerBox");
+const winnerText = document.getElementById("winnerText");
+
 const loader = document.getElementById("loader");
 
 /* ===== LOCAL STORAGE ===== */
@@ -52,6 +64,13 @@ const highScores = {
 };
 let savedName = localStorage.getItem("erikaPlayerName") || "";
 let currentMode = "run";
+let playMode = "single";
+
+function sanitizePlayerName(raw, fallback) {
+  const name = (raw || "").trim();
+  if (!name) return fallback;
+  return name.replace(/[^a-zA-Z0-9 _-]/g, "").substring(0, 12);
+}
 
 function updateHighScoreDisplay() {
   highScoreEl.textContent = highScores[currentMode].toString().padStart(5, "0");
@@ -82,6 +101,11 @@ export function onRestart(cb) {
 
 export function onBackToMenu(cb) {
   backToMenuBtn.onclick = cb;
+}
+
+export function onSelectPlayMode(cb) {
+  singleModeBtn.onclick = () => cb("single");
+  multiModeBtn.onclick = () => cb("multi");
 }
 
 export function onSelectGame(cb) {
@@ -120,16 +144,92 @@ export function getGameMode() {
   return currentMode;
 }
 
+export function setPlayMode(mode) {
+  playMode = mode;
+  singleModeBtn.classList.toggle("active", mode === "single");
+  multiModeBtn.classList.toggle("active", mode === "multi");
+}
+
+export function getPlayMode() {
+  return playMode;
+}
+
+export function showMultiNameModal() {
+  multiNameModal.style.display = "flex";
+  player1NameInput.value = localStorage.getItem("player1Name") || "";
+  player2NameInput.value = localStorage.getItem("player2Name") || "";
+  player1NameInput.focus();
+}
+
+export function hideMultiNameModal() {
+  multiNameModal.style.display = "none";
+}
+
+export function getMultiNames() {
+  const name1 = sanitizePlayerName(localStorage.getItem("player1Name"), "Jugador 1");
+  const name2 = sanitizePlayerName(localStorage.getItem("player2Name"), "Jugador 2");
+  return [name1, name2];
+}
+
+export function saveMultiNamesFromInputs() {
+  const name1 = sanitizePlayerName(player1NameInput.value, "Jugador 1");
+  const name2 = sanitizePlayerName(player2NameInput.value, "Jugador 2");
+
+  localStorage.setItem("player1Name", name1);
+  localStorage.setItem("player2Name", name2);
+
+  return [name1, name2];
+}
+
+export function onSubmitMultiNames(cb) {
+  startMultiBtn.onclick = () => {
+    const [name1, name2] = saveMultiNamesFromInputs();
+    hideMultiNameModal();
+    cb(name1, name2);
+  };
+}
+
+export function showMatchOver(text) {
+  menu.style.display = "flex";
+  gameOverText.textContent = "FIN DE LA PARTIDA";
+  gameOverText.style.display = "block";
+  finalScore.style.display = "none";
+  newRecord.style.display = "none";
+  instructions.style.display = "none";
+  gameSelect.style.display = "none";
+  playModeSelect.style.display = "none";
+
+  leaderboardBox.style.display = "none";
+  fullLeaderboardBox.style.display = "none";
+  loader.style.display = "none";
+  myRankText.style.display = "none";
+  nameModal.style.display = "none";
+  multiNameModal.style.display = "none";
+
+  winnerText.textContent = text;
+  winnerBox.style.display = "block";
+
+  restartBtn.style.display = "block";
+  backToMenuBtn.style.display = "block";
+  startBtn.style.display = "none";
+
+  document.body.classList.remove("menu-demo");
+  document.body.classList.add("game-over");
+}
+
 /* ===== MENÚ ===== */
 
 export function hideMenu() {
   menu.style.display = "none";
   gameSelect.style.display = "none";
+  playModeSelect.style.display = "none";
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   nameModal.style.display = "none";
+  multiNameModal.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
+  winnerBox.style.display = "none";
   document.body.classList.remove("menu-demo");
   document.body.classList.remove("game-over");
 }
@@ -137,6 +237,7 @@ export function hideMenu() {
 export function resetMenu() {
   menu.style.display = "flex";
   gameOverText.style.display = "none";
+  gameOverText.textContent = "GAME OVER";
   finalScore.style.display = "none";
   newRecord.style.display = "none";
   restartBtn.style.display = "none";
@@ -145,12 +246,15 @@ export function resetMenu() {
   instructions.style.display = "block";
   finalScoreValue.textContent = "00000";
   gameSelect.style.display = "flex";
+  playModeSelect.style.display = "flex";
 
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   nameModal.style.display = "none";
+  multiNameModal.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
+  winnerBox.style.display = "none";
   document.body.classList.add("menu-demo");
   document.body.classList.remove("game-over");
 }
@@ -191,11 +295,14 @@ export function showGameOver(score, mode = currentMode) {
   startBtn.style.display = "none";
   instructions.style.display = "none";
   gameSelect.style.display = "none";
+  playModeSelect.style.display = "none";
 
   leaderboardBox.style.display = "none";
   fullLeaderboardBox.style.display = "none";
   loader.style.display = "none";
   myRankText.style.display = "none";
+  multiNameModal.style.display = "none";
+  winnerBox.style.display = "none";
   document.body.classList.remove("menu-demo");
   document.body.classList.add("game-over");
 

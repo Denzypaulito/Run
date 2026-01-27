@@ -48,6 +48,64 @@ body.space {
   aspect-ratio: 8 / 3;
 }
 
+#canvasWrapper.multiplayer {
+  max-width: 1400px;
+}
+
+#canvasWrapper.multiplayer {
+  aspect-ratio: auto;
+  height: 100%;
+}
+
+#singleView {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#multiView {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+.playerView {
+  position: relative;
+  width: 100%;
+  height: 50%;
+}
+
+.playerView canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+.playerHud {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: clamp(11px, 2vw, 16px);
+  font-weight: 700;
+  letter-spacing: 1px;
+  z-index: 4;
+  font-family: monospace;
+}
+
+body.portrait #multiView {
+  gap: 16px;
+}
+
+body.portrait .playerView {
+  width: 100%;
+}
+
 canvas {
   width: 100%;
   height: 100%;
@@ -70,6 +128,10 @@ canvas {
   font-family: monospace;
 }
 
+body.portrait #hud {
+  font-size: clamp(14px, 3.2vw, 20px);
+}
+
 body.day #hud {
   color: #535353;
 }
@@ -79,6 +141,15 @@ body.night #hud {
 }
 
 body.space #hud {
+  color: #f7f7f7;
+}
+
+body.day .playerHud {
+  color: #535353;
+}
+
+body.night .playerHud,
+body.space .playerHud {
   color: #f7f7f7;
 }
 
@@ -122,6 +193,14 @@ body.game-over.space #menu {
   text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+body.portrait #menu h1 {
+  font-size: clamp(2.8rem, 10vw, 5rem);
+}
+
+body.portrait #menu p {
+  font-size: clamp(1rem, 3.2vw, 1.4rem);
+}
+
 #gameSelect {
   margin: 10px 0 20px;
   display: flex;
@@ -142,6 +221,22 @@ body.game-over.space #menu {
   justify-content: center;
 }
 
+#playModeSelect {
+  margin: 6px 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+#playModeButtons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#playModeSelect button.active,
 #gameSelect button.active {
   box-shadow: 0 0 0 2px currentColor inset;
   transform: scale(1.03);
@@ -185,6 +280,33 @@ button {
   transition: all .2s ease;
   margin: 5px;
   text-transform: uppercase;
+}
+
+body.portrait button {
+  padding: clamp(14px, 2.5vh, 18px) clamp(34px, 6vw, 56px);
+  font-size: clamp(15px, 3.6vw, 20px);
+}
+
+#rotateHint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: none;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #f7f7f7;
+  font-size: 13px;
+  backdrop-filter: blur(2px);
+}
+
+#rotateHint button {
+  padding: 6px 12px;
+  font-size: 12px;
 }
 
 body.day button {
@@ -311,6 +433,51 @@ body.night #leaderboard li {
 
 #nameModal button {
   margin-top: 6px;
+}
+
+#multiNameModal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 12px;
+  gap: 10px;
+}
+
+#multiNameModal input {
+  background: transparent;
+  border: 2px solid currentColor;
+  padding: 8px 12px;
+  font-family: monospace;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+  color: inherit;
+  width: 180px;
+}
+
+#multiNameModal input::placeholder {
+  opacity: 0.6;
+}
+
+#multiNameModal button {
+  margin-top: 4px;
+}
+
+#winnerBox {
+  margin-top: 14px;
+  padding: 16px 18px;
+  border: 2px solid currentColor;
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  animation: pop 0.25s ease;
+}
+
+#winnerText {
+  font-size: clamp(1.1rem, 3.4vw, 1.6rem);
 }
 
 /* ===== LOADER ===== */
