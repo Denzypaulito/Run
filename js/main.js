@@ -415,7 +415,7 @@ document.addEventListener("keydown", e => {
       return;
     }
     if (isMultiplayer) {
-      multiAction(0);
+      //multiAction(0);
       return;
     }
     jump();
