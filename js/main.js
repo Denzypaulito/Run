@@ -57,6 +57,15 @@ import {
   toggleGravity,
   gravityCrouch
 } from "./gravity.js";
+import {
+  createColorState,
+  initColor,
+  initColorDemo,
+  updateColor,
+  updateColorDemo,
+  drawColor,
+  cycleColor
+} from "./color.js";
 
 /* ===== CANVAS ===== */
 const singleView = document.getElementById("singleView");
@@ -114,6 +123,7 @@ let world;
 let player, obstacles, frame, score, gameOver, started;
 let flappyState;
 let gravityState;
+let colorState;
 let obstacleTimer = 0;
 let demoAnimationId = null;
 let demoScore = 0;
@@ -201,6 +211,11 @@ function initGame() {
   const mode = getGameMode();
   if (mode === "flappy") {
     initFlappyGame();
+  } else if (mode === "color") {
+    colorState = createColorState(canvas, groundY);
+    initColor(colorState, canvas, groundY);
+    pauseOverlay.style.display = "none";
+    pauseBtn.style.display = "block";
   } else if (mode === "gravity") {
     initGravityGame();
   } else {
@@ -218,6 +233,7 @@ function createMultiSession(canvasEl, ctxEl) {
     obstacleTimer: 0,
     flappyState: null,
     gravityState: null,
+    colorState: null,
     score: 0,
     dead: false,
     time: 0
@@ -238,6 +254,12 @@ function initSession(session, mode) {
   if (mode === "gravity") {
     session.gravityState = createGravityState(session.canvas);
     initGravity(session.gravityState, session.canvas);
+    return;
+  }
+
+  if (mode === "color") {
+    session.colorState = createColorState(session.canvas, groundY);
+    initColor(session.colorState, session.canvas, groundY);
     return;
   }
 
@@ -262,6 +284,13 @@ function updateSession(session, mode, dt) {
     const dead = updateGravity(session.gravityState, dt);
     drawGravity(session.ctx, session.gravityState, spritesReady);
     session.score = session.gravityState.score;
+    return dead;
+  }
+
+  if (mode === "color") {
+    const dead = updateColor(session.colorState, dt);
+    drawColor(session.ctx, session.colorState, spritesReady, session.canvas);
+    session.score = session.colorState.score;
     return dead;
   }
 
@@ -321,6 +350,11 @@ function initGravityMenuDemo() {
   initGravityDemo(gravityState, canvas);
 }
 
+function initColorMenuDemo() {
+  colorState = createColorState(canvas, groundY);
+  initColorDemo(colorState, canvas, groundY);
+}
+
 function showSingleView() {
   singleView.style.display = "block";
   multiView.style.display = "none";
@@ -349,6 +383,11 @@ function jump() {
     return;
   }
 
+  if (mode === "color") {
+    cycleColor(colorState);
+    return;
+  }
+
   playerJump(player);
 }
 
@@ -364,6 +403,11 @@ function multiAction(playerIndex) {
 
   if (multiMode === "gravity") {
     toggleGravity(session.gravityState);
+    return;
+  }
+
+  if (multiMode === "color") {
+    cycleColor(session.colorState);
     return;
   }
 
@@ -847,6 +891,24 @@ function update(dt) {
     return;
   }
 
+  if (mode === "color") {
+    const dead = updateColor(colorState, dt);
+    drawColor(ctx, colorState, spritesReady, canvas);
+
+    score = colorState.score;
+    updateScore(score);
+
+    if (dead) {
+      gameOver = true;
+      pauseBtn.style.display = "none";
+      showGameOver(score, "color");
+      return;
+    }
+
+    frame++;
+    return;
+  }
+
   updateWorld(world, score);
   drawWorld(ctx, canvas, world, groundY, dt);
 
@@ -893,6 +955,8 @@ function startDemo() {
   const mode = getGameMode();
   if (mode === "flappy") {
     initFlappyDemo();
+  } else if (mode === "color") {
+    initColorMenuDemo();
   } else if (mode === "gravity") {
     initGravityMenuDemo();
   } else {
@@ -910,6 +974,9 @@ function startDemo() {
     if (getGameMode() === "flappy") {
       updateFlappyDemo(flappyState, dt, canvas);
       drawFlappy(ctx, flappyState, canvas);
+    } else if (getGameMode() === "color") {
+      updateColorDemo(colorState, dt);
+      drawColor(ctx, colorState, spritesReady, canvas);
     } else if (getGameMode() === "gravity") {
       updateGravityDemo(gravityState, dt);
       drawGravity(ctx, gravityState, spritesReady);

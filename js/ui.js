@@ -26,6 +26,7 @@ const gameSelect = document.getElementById("gameSelect");
 const selectRunBtn = document.getElementById("selectRunBtn");
 const selectFlappyBtn = document.getElementById("selectFlappyBtn");
 const selectGravityBtn = document.getElementById("selectGravityBtn");
+const selectColorBtn = document.getElementById("selectColorBtn");
 
 const playModeSelect = document.getElementById("playModeSelect");
 const singleModeBtn = document.getElementById("singleModeBtn");
@@ -60,11 +61,14 @@ const loader = document.getElementById("loader");
 const highScores = {
   run: Number(localStorage.getItem("erikaHighScore")) || 0,
   flappy: Number(localStorage.getItem("flappyHighScore")) || 0,
-  gravity: Number(localStorage.getItem("gravityHighScore")) || 0
+  gravity: Number(localStorage.getItem("gravityHighScore")) || 0,
+  color: Number(localStorage.getItem("colorHighScore")) || 0
 };
 let savedName = localStorage.getItem("erikaPlayerName") || "";
 let currentMode = "run";
 let playMode = "single";
+let menuState = "menu";
+let gameOverToken = 0;
 
 function sanitizePlayerName(raw, fallback) {
   const name = (raw || "").trim();
@@ -112,6 +116,7 @@ export function onSelectGame(cb) {
   selectRunBtn.onclick = () => cb("run");
   selectFlappyBtn.onclick = () => cb("flappy");
   selectGravityBtn.onclick = () => cb("gravity");
+  selectColorBtn.onclick = () => cb("color");
 }
 
 export function setGameMode(mode) {
@@ -127,6 +132,11 @@ export function setGameMode(mode) {
     instructions.textContent = "Presiona ESPACIO o toca para volar";
     document.body.classList.remove("space", "night");
     document.body.classList.add("day");
+  } else if (mode === "color") {
+    gameTitle.textContent = "ERIKA COLORS";
+    instructions.textContent = "Cambia color para pasar las barreras";
+    document.body.classList.remove("space", "night");
+    document.body.classList.add("day");
   } else {
     gameTitle.textContent = "ERIKA GRAVITY";
     instructions.textContent = "Presiona ESPACIO o toca para invertir gravedad";
@@ -137,6 +147,7 @@ export function setGameMode(mode) {
   selectRunBtn.classList.toggle("active", mode === "run");
   selectFlappyBtn.classList.toggle("active", mode === "flappy");
   selectGravityBtn.classList.toggle("active", mode === "gravity");
+  selectColorBtn.classList.toggle("active", mode === "color");
   updateHighScoreDisplay();
 }
 
@@ -215,6 +226,7 @@ export function showMatchOver(text) {
 
   document.body.classList.remove("menu-demo");
   document.body.classList.add("game-over");
+  menuState = "gameover";
 }
 
 /* ===== MENÚ ===== */
@@ -232,6 +244,8 @@ export function hideMenu() {
   winnerBox.style.display = "none";
   document.body.classList.remove("menu-demo");
   document.body.classList.remove("game-over");
+  menuState = "hidden";
+  gameOverToken++;
 }
 
 export function resetMenu() {
@@ -245,6 +259,7 @@ export function resetMenu() {
   startBtn.style.display = "block";
   instructions.style.display = "block";
   finalScoreValue.textContent = "00000";
+  scoreEl.textContent = "00000";
   gameSelect.style.display = "flex";
   playModeSelect.style.display = "flex";
 
@@ -257,6 +272,8 @@ export function resetMenu() {
   winnerBox.style.display = "none";
   document.body.classList.add("menu-demo");
   document.body.classList.remove("game-over");
+  menuState = "menu";
+  gameOverToken++;
 }
 
 /* ===== GAME OVER ===== */
@@ -266,6 +283,7 @@ export function showGameOver(score, mode = currentMode) {
   const table = getTableForMode(currentMode);
   const finalScoreNum = Math.floor(score);
   const isNewRecord = finalScoreNum > highScores[currentMode];
+  const token = ++gameOverToken;
 
   if (isNewRecord) {
     highScores[currentMode] = finalScoreNum;
@@ -274,6 +292,8 @@ export function showGameOver(score, mode = currentMode) {
       localStorage.setItem("erikaHighScore", finalScoreNum.toString());
     } else if (currentMode === "flappy") {
       localStorage.setItem("flappyHighScore", finalScoreNum.toString());
+    } else if (currentMode === "color") {
+      localStorage.setItem("colorHighScore", finalScoreNum.toString());
     } else {
       localStorage.setItem("gravityHighScore", finalScoreNum.toString());
     }
@@ -305,6 +325,7 @@ export function showGameOver(score, mode = currentMode) {
   winnerBox.style.display = "none";
   document.body.classList.remove("menu-demo");
   document.body.classList.add("game-over");
+  menuState = "gameover";
 
   /* ===============================
      👉 SOLO SI ES NUEVO RÉCORD
@@ -336,6 +357,8 @@ export function showGameOver(score, mode = currentMode) {
       getMyRank(finalScoreNum, table)
     ]);
 
+      if (token !== gameOverToken || menuState !== "gameover") return;
+
       finishLeaderboard(scores, myRank, name, finalScoreNum);
     };
 
@@ -350,6 +373,7 @@ export function showGameOver(score, mode = currentMode) {
       getTopScores(table),
       getMyRank(finalScoreNum, table)
     ]).then(([scores, myRank]) => {
+      if (token !== gameOverToken || menuState !== "gameover") return;
       finishLeaderboard(scores, myRank, savedName, finalScoreNum);
     });
   }
