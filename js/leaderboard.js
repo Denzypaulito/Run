@@ -5,7 +5,8 @@ const TABLES = {
   run: "scores",
   flappy: "flappy_scores",
   gravity: "gravity_scores",
-  color: "color_scores"
+  color: "color_scores",
+  block: "block_scores"
 };
 
 export function getTableForMode(mode) {

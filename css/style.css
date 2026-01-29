@@ -52,6 +52,11 @@ body.space {
   max-width: 1400px;
 }
 
+#canvasWrapper.blockMode {
+  aspect-ratio: 4 / 3;
+  max-width: 1000px;
+}
+
 #canvasWrapper.multiplayer {
   aspect-ratio: auto;
   height: 100%;
@@ -115,6 +120,7 @@ canvas {
   image-rendering: -webkit-crisp-edges;
   image-rendering: crisp-edges;
   -ms-interpolation-mode: nearest-neighbor;
+  touch-action: none;
 }
 
 #hud {

@@ -66,6 +66,17 @@ import {
   drawColor,
   cycleColor
 } from "./color.js";
+import {
+  createBlockState,
+  initBlock,
+  initBlockDemo,
+  updateBlock,
+  updateBlockDemo,
+  drawBlock,
+  handleBlockClick,
+  handleBlockHover,
+  clearBlockHover
+} from "./block.js";
 
 /* ===== CANVAS ===== */
 const singleView = document.getElementById("singleView");
@@ -82,6 +93,9 @@ const ctxP1 = canvasP1.getContext("2d", { alpha: false });
 const ctxP2 = canvasP2.getContext("2d", { alpha: false });
 ctxP1.imageSmoothingEnabled = false;
 ctxP2.imageSmoothingEnabled = false;
+
+const baseCanvasSize = { width: canvas.width, height: canvas.height };
+const blockCanvasSize = { width: 800, height: 600 };
 
 const p1NameEl = document.getElementById("p1Name");
 const p2NameEl = document.getElementById("p2Name");
@@ -124,6 +138,7 @@ let player, obstacles, frame, score, gameOver, started;
 let flappyState;
 let gravityState;
 let colorState;
+let blockState;
 let obstacleTimer = 0;
 let demoAnimationId = null;
 let demoScore = 0;
@@ -145,6 +160,24 @@ let countingDown = false;
 let countdown = 3;
 let countdownTimeoutId = null;
 let countdownToken = 0;
+
+function setCanvasSize(canvasEl, ctxEl, width, height) {
+  if (canvasEl.width === width && canvasEl.height === height) return;
+  canvasEl.width = width;
+  canvasEl.height = height;
+  if (ctxEl) ctxEl.imageSmoothingEnabled = false;
+}
+
+function applyCanvasMode(mode) {
+  const isBlock = mode === "block";
+  canvasWrapper.classList.toggle("blockMode", isBlock);
+  const size = isBlock ? blockCanvasSize : baseCanvasSize;
+  setCanvasSize(canvas, ctx, size.width, size.height);
+  if (!isBlock) {
+    setCanvasSize(canvasP1, ctxP1, baseCanvasSize.width, baseCanvasSize.height);
+    setCanvasSize(canvasP2, ctxP2, baseCanvasSize.width, baseCanvasSize.height);
+  }
+}
 
 /* ===== INIT ===== */
 function initRun() {
@@ -216,6 +249,18 @@ function initGame() {
     initColor(colorState, canvas, groundY);
     pauseOverlay.style.display = "none";
     pauseBtn.style.display = "block";
+  } else if (mode === "block") {
+    blockState = createBlockState(canvas);
+    initBlock(blockState, canvas);
+    pauseOverlay.style.display = "none";
+    pauseBtn.style.display = "block";
+    frame = 0;
+    score = 0;
+    gameOver = false;
+    paused = false;
+    countingDown = false;
+    countdown = 3;
+    updateScore(0);
   } else if (mode === "gravity") {
     initGravityGame();
   } else {
@@ -234,6 +279,7 @@ function createMultiSession(canvasEl, ctxEl) {
     flappyState: null,
     gravityState: null,
     colorState: null,
+    blockState: null,
     score: 0,
     dead: false,
     time: 0
@@ -260,6 +306,12 @@ function initSession(session, mode) {
   if (mode === "color") {
     session.colorState = createColorState(session.canvas, groundY);
     initColor(session.colorState, session.canvas, groundY);
+    return;
+  }
+
+  if (mode === "block") {
+    session.blockState = createBlockState(session.canvas);
+    initBlock(session.blockState, session.canvas);
     return;
   }
 
@@ -291,6 +343,13 @@ function updateSession(session, mode, dt) {
     const dead = updateColor(session.colorState, dt);
     drawColor(session.ctx, session.colorState, spritesReady, session.canvas);
     session.score = session.colorState.score;
+    return dead;
+  }
+
+  if (mode === "block") {
+    const dead = updateBlock(session.blockState);
+    drawBlock(session.ctx, session.blockState, spritesReady, session.canvas);
+    session.score = session.blockState.score;
     return dead;
   }
 
@@ -355,6 +414,11 @@ function initColorMenuDemo() {
   initColorDemo(colorState, canvas, groundY);
 }
 
+function initBlockMenuDemo() {
+  blockState = createBlockState(canvas);
+  initBlockDemo(blockState, canvas);
+}
+
 function showSingleView() {
   singleView.style.display = "block";
   multiView.style.display = "none";
@@ -388,6 +452,10 @@ function jump() {
     return;
   }
 
+  if (mode === "block") {
+    return;
+  }
+
   playerJump(player);
 }
 
@@ -408,6 +476,10 @@ function multiAction(playerIndex) {
 
   if (multiMode === "color") {
     cycleColor(session.colorState);
+    return;
+  }
+
+  if (multiMode === "block") {
     return;
   }
 
@@ -521,9 +593,23 @@ function isInteractiveTarget(target) {
   return target.closest("button, input, #pauseOverlay");
 }
 
+function handleBlockPointerInput(clientX, clientY) {
+  if (!started || gameOver || paused || countingDown) return false;
+  if (getGameMode() !== "block") return false;
+
+  if (!isMultiplayer) {
+    return handleBlockClick(blockState, canvas, clientX, clientY);
+  }
+
+  const handledP1 = handleBlockClick(multiPlayers[0]?.blockState, canvasP1, clientX, clientY);
+  const handledP2 = handleBlockClick(multiPlayers[1]?.blockState, canvasP2, clientX, clientY);
+  return handledP1 || handledP2;
+}
+
 document.addEventListener("click", e => {
   if (isInteractiveTarget(e.target)) return;
   if (handleMenuStart()) return;
+  if (handleBlockPointerInput(e.clientX, e.clientY)) return;
   if (isMultiplayer) {
     const half = window.innerHeight / 2;
     multiAction(e.clientY < half ? 0 : 1);
@@ -537,6 +623,7 @@ document.addEventListener("touchstart", e => {
   e.preventDefault();
   if (handleMenuStart()) return;
   const touch = e.touches[0];
+  if (handleBlockPointerInput(touch.clientX, touch.clientY)) return;
   if (isMultiplayer) {
     const half = window.innerHeight / 2;
     multiAction(touch.clientY < half ? 0 : 1);
@@ -544,6 +631,20 @@ document.addEventListener("touchstart", e => {
   }
   jump();
 }, { passive: false });
+
+function onBlockPointerMove(e) {
+  if (!started || gameOver || paused || countingDown) return;
+  if (getGameMode() !== "block") return;
+  handleBlockHover(blockState, canvas, e.clientX, e.clientY);
+}
+
+function onBlockPointerLeave() {
+  if (getGameMode() !== "block") return;
+  clearBlockHover(blockState);
+}
+
+canvas.addEventListener("pointermove", onBlockPointerMove);
+canvas.addEventListener("pointerleave", onBlockPointerLeave);
 
 /* ===== PAUSA ===== */
 
@@ -644,12 +745,14 @@ onSelectGame(mode => {
   if (mode === current) return;
 
   setGameMode(mode);
+  applyCanvasMode(mode);
   resetMenu();
   ensureMenuState();
   startDemo();
 });
 
 setGameMode(getGameMode());
+applyCanvasMode(getGameMode());
 setPlayMode(getPlayMode());
 startDemo();
 
@@ -669,6 +772,8 @@ function startSingleGame() {
   showSingleView();
   hideMultiNameModal();
   hideMenu();
+  clearBlockHover(blockState);
+  applyCanvasMode(getGameMode());
   if (animationId) cancelAnimationFrame(animationId);
   if (multiAnimationId) cancelAnimationFrame(multiAnimationId);
   stopDemo();
@@ -692,6 +797,7 @@ function startMultiplayerGame(name1, name2) {
   showMultiView();
   hideMultiNameModal();
   hideMenu();
+  clearBlockHover(blockState);
   if (animationId) cancelAnimationFrame(animationId);
   if (multiAnimationId) cancelAnimationFrame(multiAnimationId);
   stopDemo();
@@ -755,6 +861,11 @@ window.addEventListener("resize", updateOrientationHint);
 updateOrientationHint();
 
 onStart(() => {
+  if (getGameMode() === "block") {
+    setPlayMode("single");
+    startSingleGame();
+    return;
+  }
   if (getPlayMode() === "multi") {
     if (multiNameModalIsOpen()) {
       const [n1, n2] = saveMultiNamesFromInputs();
@@ -773,6 +884,11 @@ onBackToMenu(() => {
 });
 
 onRestart(() => {
+  if (getGameMode() === "block") {
+    setPlayMode("single");
+    startSingleGame();
+    return;
+  }
   if (getPlayMode() === "multi" && isMultiplayer) {
     if (multiNameModalIsOpen()) {
       const [n1, n2] = saveMultiNamesFromInputs();
@@ -909,6 +1025,24 @@ function update(dt) {
     return;
   }
 
+  if (mode === "block") {
+    const dead = updateBlock(blockState);
+    drawBlock(ctx, blockState, spritesReady, canvas);
+
+    score = blockState.score;
+    updateScore(score);
+
+    if (dead) {
+      gameOver = true;
+      pauseBtn.style.display = "none";
+      showGameOver(score, "block");
+      return;
+    }
+
+    frame++;
+    return;
+  }
+
   updateWorld(world, score);
   drawWorld(ctx, canvas, world, groundY, dt);
 
@@ -951,10 +1085,14 @@ function startDemo() {
   stopDemo();
   showSingleView();
   ensureMenuState();
+  clearBlockHover(blockState);
+  applyCanvasMode(getGameMode());
 
   const mode = getGameMode();
   if (mode === "flappy") {
     initFlappyDemo();
+  } else if (mode === "block") {
+    initBlockMenuDemo();
   } else if (mode === "color") {
     initColorMenuDemo();
   } else if (mode === "gravity") {
@@ -974,6 +1112,9 @@ function startDemo() {
     if (getGameMode() === "flappy") {
       updateFlappyDemo(flappyState, dt, canvas);
       drawFlappy(ctx, flappyState, canvas);
+    } else if (getGameMode() === "block") {
+      updateBlockDemo(blockState, dt);
+      drawBlock(ctx, blockState, spritesReady, canvas);
     } else if (getGameMode() === "color") {
       updateColorDemo(colorState, dt);
       drawColor(ctx, colorState, spritesReady, canvas);
@@ -1045,6 +1186,7 @@ function goToMenu() {
   showSingleView();
   resetMenu();
   ensureMenuState();
+  clearBlockHover(blockState);
   startDemo();
 }
 

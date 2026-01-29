@@ -27,6 +27,7 @@ const selectRunBtn = document.getElementById("selectRunBtn");
 const selectFlappyBtn = document.getElementById("selectFlappyBtn");
 const selectGravityBtn = document.getElementById("selectGravityBtn");
 const selectColorBtn = document.getElementById("selectColorBtn");
+const selectBlockBtn = document.getElementById("selectBlockBtn");
 
 const playModeSelect = document.getElementById("playModeSelect");
 const singleModeBtn = document.getElementById("singleModeBtn");
@@ -62,7 +63,8 @@ const highScores = {
   run: Number(localStorage.getItem("erikaHighScore")) || 0,
   flappy: Number(localStorage.getItem("flappyHighScore")) || 0,
   gravity: Number(localStorage.getItem("gravityHighScore")) || 0,
-  color: Number(localStorage.getItem("colorHighScore")) || 0
+  color: Number(localStorage.getItem("colorHighScore")) || 0,
+  block: Number(localStorage.getItem("blockHighScore")) || 0
 };
 let savedName = localStorage.getItem("erikaPlayerName") || "";
 let currentMode = "run";
@@ -117,6 +119,7 @@ export function onSelectGame(cb) {
   selectFlappyBtn.onclick = () => cb("flappy");
   selectGravityBtn.onclick = () => cb("gravity");
   selectColorBtn.onclick = () => cb("color");
+  selectBlockBtn.onclick = () => cb("block");
 }
 
 export function setGameMode(mode) {
@@ -137,6 +140,11 @@ export function setGameMode(mode) {
     instructions.textContent = "Cambia color para pasar las barreras";
     document.body.classList.remove("space", "night");
     document.body.classList.add("day");
+  } else if (mode === "block") {
+    gameTitle.textContent = "ERIKA BLOCKS";
+    instructions.textContent = "Arrastra las piezas para completar líneas";
+    document.body.classList.remove("space", "day");
+    document.body.classList.add("night");
   } else {
     gameTitle.textContent = "ERIKA GRAVITY";
     instructions.textContent = "Presiona ESPACIO o toca para invertir gravedad";
@@ -148,6 +156,11 @@ export function setGameMode(mode) {
   selectFlappyBtn.classList.toggle("active", mode === "flappy");
   selectGravityBtn.classList.toggle("active", mode === "gravity");
   selectColorBtn.classList.toggle("active", mode === "color");
+  selectBlockBtn.classList.toggle("active", mode === "block");
+  multiModeBtn.disabled = mode === "block";
+  if (mode === "block") {
+    setPlayMode("single");
+  }
   updateHighScoreDisplay();
 }
 
@@ -280,7 +293,6 @@ export function resetMenu() {
 
 export function showGameOver(score, mode = currentMode) {
   currentMode = mode;
-  const table = getTableForMode(currentMode);
   const finalScoreNum = Math.floor(score);
   const isNewRecord = finalScoreNum > highScores[currentMode];
   const token = ++gameOverToken;
@@ -294,6 +306,8 @@ export function showGameOver(score, mode = currentMode) {
       localStorage.setItem("flappyHighScore", finalScoreNum.toString());
     } else if (currentMode === "color") {
       localStorage.setItem("colorHighScore", finalScoreNum.toString());
+    } else if (currentMode === "block") {
+      localStorage.setItem("blockHighScore", finalScoreNum.toString());
     } else {
       localStorage.setItem("gravityHighScore", finalScoreNum.toString());
     }
@@ -330,6 +344,7 @@ export function showGameOver(score, mode = currentMode) {
   /* ===============================
      👉 SOLO SI ES NUEVO RÉCORD
   =============================== */
+  const table = getTableForMode(currentMode);
 
   if (isNewRecord) {
     nameModal.style.display = "flex";
